@@ -12,10 +12,9 @@
     #include <netinet/in.h>
     #include <unistd.h>
 #elif WIN32
-    #define WIN32_LEAN_AND_MEAN
-    #include <Ws2tcpip.h>
-    #include <winsock2.h>
-    #include <Windows.h>
+#define _WINSOCKAPI_ 
+#include <WinSock2.h>
+#include <WS2tcpip.h>
 #endif
 
 using namespace std;
@@ -131,5 +130,59 @@ public:
 };
 
 
+class FieldRetriver
+{
+	const char* M_ptr;
+public:
+	FieldRetriver(const char* Data) :M_ptr(Data){}
+	std::string String(int CharCount)
+	{
+		std::string Ret = std::string(M_ptr, CharCount);
+		M_ptr += CharCount;
+		return Ret;
+	}
+
+	int Int()
+	{
+		int Ret = *(int*)M_ptr;
+		M_ptr += 4;
+		return Ret;
+	}
+
+	char Char()
+	{
+		return *M_ptr++;
+	}
+
+};
+
+class FieldFiller
+{
+	char* M_ptr;
+	char* M_orig;
+public:
+	FieldFiller( char* Data) :M_ptr(Data),M_orig(Data){}
+	FieldFiller& String(const string& Str, int Count = -1)
+	{
+		if (Count == -1)
+			Count = Str.length();
+		memset((void*)M_ptr, 0, Count);
+		memcpy((void*)M_ptr, Str.c_str(), Str.length());
+		M_ptr += Count;
+		return *this;
+	}
+	FieldFiller& Int(int Num)
+	{
+		*(int*)M_ptr = Num;
+		M_ptr += 4;
+		return *this;
+	}
+	FieldFiller& Char(char Ch)
+	{
+		*M_ptr++ = Ch;
+		return *this;
+	}
+	int Pos(){ return M_ptr - M_orig; }
+};
 
 #endif // NETLAYER_H_INCLUDED

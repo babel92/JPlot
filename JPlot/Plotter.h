@@ -9,30 +9,30 @@
 #include "Cartesian.H"
 #include <thread>
 #include <mutex>
+#include <string>
 #include <condition_variable>
 
 typedef float Real;
 using std::queue;
+using std::string;
 
 class Plotter
 {
     friend void PlotterThread(void*);
     friend void APCWrapper(void*);
     public:
-        Plotter(double xmin=0,double xmax=100,double ymin=0,double ymax=100);
+		Plotter(const string FigName, const string XName, const string YName);
 
         void SetBGColor(float R,float G,float B);
         void Plot(Real*buf,int size);
-        void SafePlot(Real*buf,int size);
         void Plot2D(Real*data1,Real*data2,int size);
 
-        void PlotSpectrum(Real*buf,int size);
-        void SetXText(const char*label){Fl::lock();m_x->copy_label(label);Fl::unlock();}
-        void SetXMin(double num){Fl::lock();m_x->minimum(num);Fl::unlock();}
-        void SetXMax(double num){Fl::lock();m_x->maximum(num);Fl::unlock();}
-        void SetYText(const char*label){Fl::lock();m_y->copy_label(label);Fl::unlock();}
-        void SetYMin(double num){Fl::lock();m_y->minimum(num);Fl::unlock();}
-        void SetYMax(double num){Fl::lock();m_y->maximum(num);Fl::unlock();}
+        void SetXText(const char*label){m_x->copy_label(label);}
+        void SetXMin(double num){m_x->minimum(num);}
+        void SetXMax(double num){m_x->maximum(num);}
+        void SetYText(const char*label){m_y->copy_label(label);}
+        void SetYMin(double num){m_y->minimum(num);}
+        void SetYMax(double num){m_y->maximum(num);}
 
         void SetTitle(const char*title){m_window->copy_label(title);}
         virtual ~Plotter();

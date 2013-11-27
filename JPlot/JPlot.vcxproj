@@ -86,6 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Cartesian.H" />
+    <ClInclude Include="IPC.h" />
     <ClInclude Include="netlayer.h" />
     <ClInclude Include="Plotter.h" />
     <ClInclude Include="safecall.h" />

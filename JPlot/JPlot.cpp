@@ -9,52 +9,16 @@
 
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
-#include <FL/Fl_Select_Browser.H>
+#include <FL/Fl_Group.H>
+#include <FL/Fl_Hold_Browser.H>
 #include <FL/Fl_Button.H>
 
 #include "netlayer.h"
 #include "Plotter.h"
 #include "safecall.h"
+#include "IPC.h"
 
 #include <Windows.h>
-
-class IPCHelper
-{
-public:
-	static int CreateIPCEvent(const char*Name)
-	{
-		HANDLE Event = ::CreateEventA(NULL, 0, 0, Name);
-		if (::GetLastError() == ERROR_ALREADY_EXISTS)
-		{
-			::CloseHandle(Event);
-			return 0;
-		}
-		else
-			return (int)Event;
-	}
-
-	static int FindNamedIPCEvent(const char*Name)
-	{
-		HANDLE Event = ::CreateEventA(NULL, 0, 0, Name);
-		if (::GetLastError() != ERROR_ALREADY_EXISTS)
-		{
-			::CloseHandle(Event);
-			return -1;
-		}
-		else
-			return (int)Event;
-	}
-
-	static int WaitOnIPCEvent(int Event)
-	{
-		return WAIT_FAILED==::WaitForSingleObject((HANDLE)Event, INFINITE);
-	}
-
-	static void SignalIPCEvent(int Event)
-	{
-		PulseEvent((HANDLE)Event);
-	}
-};
 
 std::vector<TCPSocket*> ClientList;
 std::mutex MuClient;
@@ -66,7 +30,7 @@ void IPCListener()
 	TCPSocket Server("localhost", "64129");
 	Server.Bind();
 	Server.Listen();
-	int IPCEvent = IPCHelper::FindNamedIPCEvent("JPlotEVENT");
+	int IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
 	if (IPCEvent != -1)
 		IPCHelper::SignalIPCEvent(IPCEvent);
 
@@ -126,28 +90,6 @@ void RequestListener()
 	}
 }
 
-class FieldRetriver
-{
-	const char* M_ptr;
-public:
-	FieldRetriver(const char* Data) :M_ptr(Data){}
-	std::string String(int CharCount)
-	{
-		std::string Ret = std::string(M_ptr, CharCount);
-		M_ptr += CharCount;
-		return Ret;
-	}
-	int Int()
-	{
-		int Ret = *(int*)M_ptr;
-		M_ptr += 4;
-		return Ret;
-	}
-	char Char()
-	{
-		return *M_ptr++;
-	}
-};
 
 int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 {
@@ -159,7 +101,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 		std::string&& FigName = Header.String(16);
 		std::string&& XName = Header.String(16);
 		std::string&& YName = Header.String(16);
-		Invoke(WRAPCALL([=]{new Plotter; Client->Send("UUID"); }));
+		Invoke(WRAPCALL([=]{new Plotter(FigName,XName,YName); Client->Send("UUID"); }));
 	}
 	else if (Cmd == "")
 	{
@@ -195,12 +137,21 @@ int main(int argc, char* argv[])
 
 	std::thread ThrdReqListener(RequestListener);
 	std::thread ThrdIPCListener(IPCListener);
+	
 	Fl::lock();
-	Fl_Window Win(300, 200, "JPlot Manager");
+	Fl_Window Win(400, 300, "JPlot Manager");
 	PtrWin = &Win;
 	SetConsoleCtrlHandler(ExitHandler, TRUE);
-	Fl_Select_Browser listview(0, 0, 300, 200);
+
+	Fl_Group Group(0, 0, 400, 300);
+	Group.box(FL_DOWN_BOX);
+	Group.align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
+	Fl_Hold_Browser listview(10, 10, 380, 280);
+	listview.align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
+	Group.add_resizable(listview);
+	Group.end();
 	Win.resizable(Win);
+	Win.size_range(300, 200);
 	Win.show();
 	
 	int Ret = Fl::run();

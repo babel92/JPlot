@@ -86,10 +86,13 @@ void APCWrapper(void* plotter)
 
 }
 
-Plotter::Plotter(double xmin,double xmax,double ymin,double ymax)
-    :m_xmin(xmin),m_ymin(ymin),m_xmax(xmax),m_ymax(ymax)
+Plotter::Plotter(const string FigName, const string XName, const string YName)
+    :m_xmin(0),m_ymin(0),m_xmax(100),m_ymax(100)
 {
 	APCWrapper(this);
+	SetTitle(FigName.c_str());
+	SetXText(XName.c_str());
+	SetYText(YName.c_str());
 }
 
 void Plotter::Plot(Real*buf,int size)
