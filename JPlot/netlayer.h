@@ -141,19 +141,17 @@ public:
 		M_ptr += CharCount;
 		return Ret;
 	}
-
 	int Int()
 	{
 		int Ret = *(int*)M_ptr;
 		M_ptr += 4;
 		return Ret;
 	}
-
 	char Char()
 	{
 		return *M_ptr++;
 	}
-
+	void* Ptr(){ return (void*)M_ptr; }
 };
 
 class FieldFiller
@@ -183,6 +181,8 @@ public:
 		return *this;
 	}
 	int Pos(){ return M_ptr - M_orig; }
+	void Reset(){ M_ptr = M_orig; }
+	void* Ptr(){ return (void*)M_ptr; }
 };
 
 #endif // NETLAYER_H_INCLUDED

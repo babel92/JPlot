@@ -16,7 +16,7 @@ typedef float Real;
 using std::queue;
 using std::string;
 
-class Plotter
+class Plotter:public Fl_Double_Window
 {
     friend void PlotterThread(void*);
     friend void APCWrapper(void*);
@@ -34,13 +34,13 @@ class Plotter
         void SetYMin(double num){m_y->minimum(num);}
         void SetYMax(double num){m_y->maximum(num);}
 
-        void SetTitle(const char*title){m_window->copy_label(title);}
+        void SetTitle(const char*title){copy_label(title);}
         virtual ~Plotter();
     protected:
     private:
 
         double m_xmin,m_xmax,m_ymin,m_ymax;
-        Fl_Window*m_window;
+
         Ca_Canvas*m_canvas;
         Ca_X_Axis*m_x;
         Ca_Y_Axis*m_y;

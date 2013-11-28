@@ -35,9 +35,8 @@ void APCWrapper(void* plotter)
 {
     Plotter *ptr=(Plotter*)plotter;
 
-    ptr->m_window = new Fl_Double_Window(580, 390, "Plotter");
-    ptr->m_window->size_range(450,250);
-    ptr->m_window->callback([](Fl_Widget*w,void*arg) { w->hide();delete (Plotter*)arg; },(void*)ptr);
+    ptr->size_range(450,250);
+    ptr->callback([](Fl_Widget*w,void*arg) { w->hide();delete (Plotter*)arg; },(void*)ptr);
 
     ptr->m_group =new Fl_Group(0, 0, 580, 390 );
     ptr->m_group->box(FL_DOWN_BOX);
@@ -81,13 +80,13 @@ void APCWrapper(void* plotter)
 
     Fl_Group::current()->resizable(ptr->m_group);
 
-    ptr->m_window->end();
-    ptr->m_window->show();
+    ptr->end();
+    ptr->show();
 
 }
 
 Plotter::Plotter(const string FigName, const string XName, const string YName)
-    :m_xmin(0),m_ymin(0),m_xmax(100),m_ymax(100)
+:Fl_Double_Window(580, 390, "Plotter"), m_xmin(0), m_ymin(0), m_xmax(100), m_ymax(100)
 {
 	APCWrapper(this);
 	SetTitle(FigName.c_str());
@@ -106,16 +105,14 @@ void Plotter::Plot(Real*buf,int size)
         Invoke(WRAPCALL(&Plotter::Plot,this,newbuf,size));
         return;
     }*/
-    Fl::lock();
     Ca_LinePoint* lp=NULL;
     Ca_Canvas::current(m_canvas);
     m_y->current();
     m_canvas->clear();
     for(int i=0;i<size;++i)
         lp=new Ca_LinePoint(lp,i,buf[i],0,FL_BLUE);
-    m_canvas->redraw();
-    Fl::unlock();
-    //Fl::awake();
+    redraw();
+    Fl::awake();
     //delete[] buf;
 }
 
@@ -136,6 +133,5 @@ Plotter::~Plotter()
 	delete m_y;
 	delete m_canvas;
 	delete m_group;
-	delete m_window;
     //dtor
 }
