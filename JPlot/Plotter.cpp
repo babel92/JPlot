@@ -105,6 +105,8 @@ void Plotter::Plot(Real*buf,int size)
         Invoke(WRAPCALL(&Plotter::Plot,this,newbuf,size));
         return;
     }*/
+	if (m_canvas == NULL)
+		return;
     Ca_LinePoint* lp=NULL;
     Ca_Canvas::current(m_canvas);
     m_y->current();
@@ -112,7 +114,6 @@ void Plotter::Plot(Real*buf,int size)
     for(int i=0;i<size;++i)
         lp=new Ca_LinePoint(lp,i,buf[i],0,FL_BLUE);
     redraw();
-    Fl::awake();
     //delete[] buf;
 }
 
@@ -129,9 +130,10 @@ void Plotter::Plot2D(Real*data1,Real*data2,int size)
 
 Plotter::~Plotter()
 {
-	delete m_x;
-	delete m_y;
+	// Destruction of axes are done by canvas' dtor
 	delete m_canvas;
+	m_canvas = NULL;
 	delete m_group;
+	m_group = NULL;
     //dtor
 }

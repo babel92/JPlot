@@ -89,6 +89,7 @@
     <ClInclude Include="IPC.h" />
     <ClInclude Include="netlayer.h" />
     <ClInclude Include="Plotter.h" />
+    <ClInclude Include="PlotterFactory.h" />
     <ClInclude Include="safecall.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -98,6 +99,7 @@
     <ClCompile Include="JPlot.cpp" />
     <ClCompile Include="netlayer.cpp" />
     <ClCompile Include="Plotter.cpp" />
+    <ClCompile Include="PlotterFactory.cpp" />
     <ClCompile Include="safecall.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>

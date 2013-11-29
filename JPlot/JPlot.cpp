@@ -17,6 +17,7 @@
 
 
 #include "Plotter.h"
+#include "PlotterFactory.h"
 #include "safecall.h"
 #include "IPC.h"
 
@@ -92,55 +93,31 @@ void RequestListener()
 	}
 }
 
-class PlotterFactory
-{
-	struct PlotterEntry
-	{
-		Plotter* Wnd;
-		int ID;
-		char Type;
-		PlotterEntry(Plotter* Plotter_, int ID_, char Type_) :Wnd(Plotter_), ID(ID_), Type(Type_){}
-	};
-	static const int MAX_PLOTTER = 16;
-	static PlotterEntry* PlotterList[MAX_PLOTTER];
-public:
-	static int AllocPlotter(char Type)
-	{
-		for (int i = 0; i < MAX_PLOTTER; ++i)
-		{
-			if (PlotterList[i] == NULL)
-			{
-				PlotterList[i] = new PlotterEntry(new Plotter("A","B","C"), i, Type);
-				return i;
-			}
-		}
-		return -1;
-	}
-	static void FreePlotter(int ID)
-	{
-		if (PlotterList[ID] != NULL)
-		{
-			PlotterList[ID]->Wnd->hide();
-			delete PlotterList[ID]->Wnd;
-			delete PlotterList[ID];
-			PlotterList[ID] = NULL;
-			cout << "Plotter ID:" << ID << " freed\n";
-		}
-	}
-	static Plotter* GetPlotter(int ID)
-	{
-		return (PlotterList[ID] != NULL) ? PlotterList[ID]->Wnd : NULL;
-	}
-	static void Cleanup()
-	{
-		for (int i = 0; i < MAX_PLOTTER; ++i)
-			FreePlotter(i);
-	}
-};
-
-PlotterFactory::PlotterEntry* PlotterFactory::PlotterList[MAX_PLOTTER] = { NULL };
-
 Fl_Hold_Browser* PtrBrow;
+
+#define SIZE_GUARD(Size) \
+if (ReqSize < Size)\
+{\
+	Client->Send("NEG SZERROR"); \
+	return 0;\
+}
+
+int FindAndDeleteUIEntry(int FreeID,int ThreadSafe=0)
+{
+	for (int i = 1; i <= PtrBrow->size(); ++i)
+	{
+		if (PtrBrow->data(i) == (void*)FreeID)
+		{
+			if (ThreadSafe)
+				Fl::lock();
+			PtrBrow->remove(i);
+			if (ThreadSafe)
+				Fl::unlock();
+			return 1;
+		}
+	}
+	return 0;
+}
 
 int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 {
@@ -148,6 +125,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 	std::string&& Cmd = Header.String(4);
 	if (Cmd == "NEWF")
 	{
+		SIZE_GUARD(57);
 		char Type = Header.Char();
 		switch (Type)
 		{
@@ -156,10 +134,16 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 				std::string&& FigName = Header.String(16);
 				std::string&& XName = Header.String(16);
 				std::string&& YName = Header.String(16);
+				int Arg = Header.Int();
 				Invoke(WRAPCALL([=]{
 					int ID = PlotterFactory::AllocPlotter(Type); 
 					std::string&& IDStr = std::to_string(ID);
 					Plotter* Wnd = PlotterFactory::GetPlotter(ID);
+					Wnd->callback([](Fl_Widget*Wid, void*Arg){
+						((Fl_Window*)Wid)->hide();
+						PlotterFactory::FreePlotter((int)Arg);
+						FindAndDeleteUIEntry((int)Arg);
+					},(void*)ID);
 					Wnd->SetTitle(FigName.c_str());
 					Wnd->SetXText(XName.c_str());
 					Wnd->SetYText(YName.c_str());
@@ -169,6 +153,9 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 				break;
 			}
 		default:
+			{
+				Client->Send("NEG TYPEERR");
+			}
 			break;
 		}
 
@@ -176,38 +163,39 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 	else if (Cmd == "FREE")
 	{
 		int FreeID = Header.Int();
-
-		for (int i = 1; i <= PtrBrow->size(); ++i)
+		if (FindAndDeleteUIEntry(FreeID, 1)) // Thread safe flag set to 1
 		{
-			if (PtrBrow->data(i) == (void*)FreeID)
-			{
-				Fl::lock();
-				PtrBrow->remove(i);
-				Fl::unlock();
-				// Seems this is the only way to hide window from another thread
-				Invoke(WRAPCALL(PlotterFactory::FreePlotter, FreeID));
-				Client->Send("OK");
-				break;
-			}
+			// Seems this is the only way to hide window from another thread
+			Invoke(WRAPCALL(PlotterFactory::FreePlotter, FreeID));
+			Client->Send("OK");
+			return 0;
 		}
-		Client->Send("NEG");
+		Client->Send("NEG NOFIG");
 	}
 	else if (Cmd == "DRAW")
 	{
+		SIZE_GUARD(22);
 		int ID = Header.Int();
+		Plotter* Plt = PlotterFactory::GetPlotter(ID);
+		if (Plt == NULL)
+		{
+			Client->Send("NEG NOFIG");
+			return 0;
+		}
 		int Arg = Header.Int();
 		int DataType = Header.Int();
 		int Size = Header.Int();
-		
-		Plotter* Plt = PlotterFactory::GetPlotter(ID);
+
 		Fl::lock();
 		Plt->Plot((float*)Header.Ptr(), Size);
+		if (Arg==1)
+			Fl::awake();
 		Fl::unlock();
 		Client->Send("OK");
 	}
 	else
 	{
-		Client->Send("NEG");
+		Client->Send("NEG NOCMD");
 	}
 
 	return 0;
