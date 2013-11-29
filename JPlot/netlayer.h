@@ -44,6 +44,7 @@ public:
     uint16_t GetHostPortNumber();
 };
 
+#ifdef WIN32
 #ifdef FD_CLR
 #undef FD_CLR
 #endif
@@ -63,6 +64,7 @@ public:
 		}							\
 	}								\
   } while(0)
+#endif
 
 class Multiplexer
 {

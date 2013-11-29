@@ -1,10 +1,22 @@
 #include "netlayer.h"
 #include <cstdio>
+#include <cstdlib>
 #include <string>
+
+using namespace std;
 
 // BaseSocket Section
 //
 //
+#ifdef WIN32
+#define itoa _itoa
+#elif LINUX
+char* itoa(int value, char*buf, int bufsize)
+{
+	sprintf(buf,"%d",value);
+	return buf;
+}
+#endif
 
 BaseSocket::BaseSocket(bool type,const string host,const string port)
     :m_type(type)
@@ -114,7 +126,7 @@ uint16_t BaseSocket::GetPeerPortNumber()
 string BaseSocket::GetPeerPortString()
 {
     char buf[16];
-    _itoa(GetPeerPortNumber(),buf,16);
+    itoa(GetPeerPortNumber(),buf,16);
     return string(buf);
 }
 
@@ -142,7 +154,7 @@ UDPSocket::UDPSocket(const string host,const string port)
     :BaseSocket(false,host,port)
 {
     int a=1;
-    setsockopt(m_sockfd,SOL_SOCKET,SO_BROADCAST,(const char*)&a,sizeof(ULONG));
+    setsockopt(m_sockfd,SOL_SOCKET,SO_BROADCAST,(const char*)&a,sizeof(int));
 }
 
 int UDPSocket::RecvFrom(char*buf,int size,int flag,sockaddr *peer)
@@ -307,9 +319,9 @@ bool NetHelper::Uncompress(char*out,long unsigned int*outlen,const char*in,long 
 in_addr* GetMyIPptr()
 {
     char ac[80];
-    if (gethostname(ac, sizeof(ac)) == SOCKET_ERROR)
+    if (gethostname(ac, sizeof(ac)) == -1)
     {
-        cerr << "Error " << WSAGetLastError() <<
+        cerr << "Error " << NetHelper::GetLastError() <<
              " when getting local host name." << endl;
         return NULL;
     }
@@ -332,8 +344,11 @@ string NetHelper::GetMyPrimaryIP()
 }
 
 string NetHelper::GetBroadcastIP()
-{
+{/*
     in_addr ip=*GetMyIPptr();
     ip.S_un.S_un_b.s_b4=255;
     return string(inet_ntoa(ip));
+*/
+		throw;
+		return "";
 }

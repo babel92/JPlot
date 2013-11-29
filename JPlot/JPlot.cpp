@@ -21,7 +21,11 @@
 #include "safecall.h"
 #include "IPC.h"
 
+#ifdef WIN32
 #include <Windows.h>
+#elif LINUX
+#include <signal.h>
+#endif
 
 std::vector<TCPSocket*> ClientList;
 std::mutex MuClient;
@@ -33,8 +37,8 @@ void IPCListener()
 	TCPSocket Server("localhost", "64129");
 	Server.Bind();
 	Server.Listen();
-	int IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
-	if (IPCEvent != -1)
+	void* IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
+	if (IPCEvent != (void*)-1)
 		IPCHelper::SignalIPCEvent(IPCEvent);
 
 	for (;;)
@@ -123,6 +127,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 {
 	FieldRetriver Header(Request);
 	std::string&& Cmd = Header.String(4);
+	cout<<Request<<endl;
 	if (Cmd == "NEWF")
 	{
 		SIZE_GUARD(57);
@@ -141,8 +146,8 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 					Plotter* Wnd = PlotterFactory::GetPlotter(ID);
 					Wnd->callback([](Fl_Widget*Wid, void*Arg){
 						((Fl_Window*)Wid)->hide();
-						PlotterFactory::FreePlotter((int)Arg);
-						FindAndDeleteUIEntry((int)Arg);
+						PlotterFactory::FreePlotter((long)Arg);
+						FindAndDeleteUIEntry((long)Arg);
 					},(void*)ID);
 					Wnd->SetTitle(FigName.c_str());
 					Wnd->SetXText(XName.c_str());
@@ -202,7 +207,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 }
 
 Fl_Window* PtrWin;
-
+#ifdef WIN32
 BOOL WINAPI ExitHandler(DWORD Opt)
 {
 	switch (Opt)
@@ -216,6 +221,19 @@ BOOL WINAPI ExitHandler(DWORD Opt)
 	}
 	return FALSE;
 }
+
+#elif LINUX
+void onExit()
+{
+	PtrWin->hide();
+}
+
+void sigint_handler(int s)
+{
+	cout << "Ctrl+C dropped\n";
+}
+
+#endif
 
 void TimerFunc(void*Dummy)
 {
@@ -232,8 +250,17 @@ int main(int argc, char* argv[])
 	Fl::lock();
 	Fl_Double_Window Win(400, 300, "JPlot Manager");
 	PtrWin = &Win;
-	SetConsoleCtrlHandler(ExitHandler, TRUE);
 
+#ifdef WIN32
+	SetConsoleCtrlHandler(ExitHandler, TRUE);
+#elif LINUX
+	struct sigaction sigIntHandler;
+	sigIntHandler.sa_handler = sigint_handler;
+	sigemptyset(&sigIntHandler.sa_mask);
+	sigIntHandler.sa_flags = 0;
+	sigaction(SIGINT, &sigIntHandler, NULL);
+	atexit(onExit);
+#endif
 	Win.callback([](Fl_Widget*Wid, void*Arg){
 		PlotterFactory::Cleanup();
 		((Fl_Window*)Wid)->hide();
