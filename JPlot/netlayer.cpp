@@ -18,9 +18,12 @@ char* itoa(int value, char*buf, int bufsize)
 }
 #endif
 
+bool BaseSocket::Initialized = false;
+
 BaseSocket::BaseSocket(bool type,const string host,const string port)
     :m_type(type)
 {
+	InitializeOnce();
     addrinfo hints;
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET;

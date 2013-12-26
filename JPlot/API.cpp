@@ -60,6 +60,7 @@ int JPlot_Init()
 #define ARGCHAR va_arg(args,char)
 #define ARGINT va_arg(args,int)
 #define ARGPTR va_arg(args,char*)
+#define ARGFLT va_arg(args,double) // float is prompted to double
 
 std::string JPlot_Command(int Command, ...)
 {
@@ -97,6 +98,27 @@ std::string JPlot_Command(int Command, ...)
 	case JPFREE:
 		MsgBuilder.String("FREE").Int(ARGINT);
 		break;
+	case JPSETF:
+		{
+			int Setting = ARGINT;
+			MsgBuilder.String("SETF");
+			MsgBuilder.Int(Setting);
+			MsgBuilder.Int(ARGINT); // ID
+			switch (Setting)
+			{
+			case JPXRANGE:
+			case JPYRANGE:
+				{
+					float Para1 = ARGFLT;
+					float Para2 = ARGFLT;
+					MsgBuilder.Float(Para1);
+					MsgBuilder.Float(Para2);
+					break;
+				}
+			default:
+				break;
+			}
+		}
 	default:
 		break;
 	}
@@ -134,4 +156,12 @@ int JPlot_Close(JGraph J)
 		return 1;
 	}
 	return 0;
+}
+
+int JPlot_SetRange(JGraph J, int Axis, float Min, float Max)
+{
+	if (!J)
+		return 0;
+	JPlot_Command(JPSETF, Axis, J->ID, Min, Max);
+	return 1;
 }

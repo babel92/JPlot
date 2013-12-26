@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JPlot", "JPlot\JPlot.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IPCTest", "IPCTest\IPCTest.vcxproj", "{3C139F51-5F52-4F8A-B458-C2480F5D66F1}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JPLib", "JPLib\JPLib.vcxproj", "{3FB116FA-55BA-4821-B1EE-00F9BE530F30}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -21,6 +23,10 @@ Global
 		{3C139F51-5F52-4F8A-B458-C2480F5D66F1}.Debug|Win32.Build.0 = Debug|Win32
 		{3C139F51-5F52-4F8A-B458-C2480F5D66F1}.Release|Win32.ActiveCfg = Release|Win32
 		{3C139F51-5F52-4F8A-B458-C2480F5D66F1}.Release|Win32.Build.0 = Release|Win32
+		{3FB116FA-55BA-4821-B1EE-00F9BE530F30}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3FB116FA-55BA-4821-B1EE-00F9BE530F30}.Debug|Win32.Build.0 = Debug|Win32
+		{3FB116FA-55BA-4821-B1EE-00F9BE530F30}.Release|Win32.ActiveCfg = Release|Win32
+		{3FB116FA-55BA-4821-B1EE-00F9BE530F30}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

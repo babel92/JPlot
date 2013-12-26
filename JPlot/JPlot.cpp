@@ -179,6 +179,40 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 		}
 
 	}
+	else if (Cmd == "SETF")
+	{
+		// SETTING, ID , PARA1 , PARA2
+		int Setting = Header.Int();
+		Plotter* Plot = PlotterFactory::GetPlotter(Header.Int());
+		switch (Setting)
+		{
+		case JPXRANGE:
+			{
+				float XMin = Header.Float();
+				float XMax = Header.Float();
+				Fl::lock();
+				Plot->SetXMin(XMin);
+				Plot->SetXMax(XMax);
+				Fl::unlock();
+				Client->Send("OK");
+				break;
+			}
+		case JPYRANGE:
+			{
+				float YMin = Header.Float();
+				float YMax = Header.Float();
+				Fl::lock();
+				Plot->SetYMin(YMin);
+				Plot->SetYMax(YMax);
+				Fl::unlock();
+				Client->Send("OK");
+				break;
+			}
+		default:
+			Client->Send("NEG NOSETTING");
+			break;
+		}
+	}
 	else if (Cmd == "FREE")
 	{
 		int FreeID = Header.Int();
@@ -256,8 +290,6 @@ void TimerFunc(void*Dummy)
 
 int main(int argc, char* argv[])
 {
-	NetHelper::Init();
-
 	std::thread ThrdReqListener(RequestListener);
 	std::thread ThrdIPCListener(IPCListener);
 	

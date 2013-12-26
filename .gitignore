@@ -5,3 +5,5 @@ JPlot/Release
 JPlot.sdf
 IPCTest/
 obj/
+*/Debug
+*/Release

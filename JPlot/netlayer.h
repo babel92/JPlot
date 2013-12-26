@@ -19,11 +19,34 @@
 
 using namespace std;
 
+class NetHelper
+{
+private:
+
+public:
+	static void Init();
+	static void Cleanup();
+	static int GetLastError();
+	//static bool Compress(char*out,long unsigned int*outlen,const char*in,long unsigned int inlen);
+	//static bool Uncompress(char*out,long unsigned int*outlen,const char*in,long unsigned int inlen);
+	static string GetMyPrimaryIP();
+	static string GetBroadcastIP();
+};
+
 class BaseSocket
 {
     friend class Multiplexer;
 private:
     void Close();
+	static bool Initialized;
+	static void InitializeOnce()
+	{
+		if (!Initialized)
+		{
+			NetHelper::Init();
+			Initialized = 1;
+		}
+	}
 protected:
     addrinfo *m_addr;
     addrinfo m_target;
@@ -31,7 +54,10 @@ protected:
     int m_bufsize;
     int m_sockfd;
     bool m_type;
-    BaseSocket() {}
+    BaseSocket() 
+	{
+		InitializeOnce();
+	}
     BaseSocket(bool type,const string host,const string port);
     ~BaseSocket();
 public:
@@ -111,20 +137,6 @@ public:
     }
 };
 
-class NetHelper
-{
-private:
-
-public:
-    static void Init();
-    static void Cleanup();
-    static int GetLastError();
-    //static bool Compress(char*out,long unsigned int*outlen,const char*in,long unsigned int inlen);
-    //static bool Uncompress(char*out,long unsigned int*outlen,const char*in,long unsigned int inlen);
-    static string GetMyPrimaryIP();
-    static string GetBroadcastIP();
-};
-
 
 class FieldRetriver
 {
@@ -146,6 +158,12 @@ public:
 	char Char()
 	{
 		return *M_ptr++;
+	}
+	float Float()
+	{
+		float Ret = *(float*)M_ptr;
+		M_ptr += sizeof(float);
+		return Ret;
 	}
 	void* Ptr(){ return (void*)M_ptr; }
 };
@@ -180,6 +198,12 @@ public:
 	{
 		memcpy(M_ptr, Ptr, Size);
 		M_ptr += Size;
+		return *this;
+	}
+	FieldFiller& Float(float F)
+	{
+		*(float*)M_ptr = F;
+		M_ptr += sizeof(float);
 		return *this;
 	}
 	int Pos(){ return M_ptr - M_orig; }
