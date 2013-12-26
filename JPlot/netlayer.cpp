@@ -92,19 +92,18 @@ void BaseSocket::Close()
 #endif
 }
 
-void BaseSocket::Bind()
+int BaseSocket::Bind()
 {
     if (bind(m_sockfd, m_target.ai_addr, m_target.ai_addrlen) == -1)
     {
 #ifdef WIN32
-        cerr<<"NetHelper::GetLastError: "<<NetHelper::GetLastError()<<endl;
         closesocket(m_sockfd);
 #elif LINUX
         close(m_sockfd);
 #endif
-        cerr<<"Failed to bind socket\n";
-        throw;
+		return 0;
     }
+	return 1;
 }
 
 string BaseSocket::GetPeerAddr()

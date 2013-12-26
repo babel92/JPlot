@@ -34,8 +34,8 @@ protected:
     BaseSocket() {}
     BaseSocket(bool type,const string host,const string port);
     ~BaseSocket();
-    void Bind();
 public:
+	int Bind();
     void SetRecvTimeOut(int sec);;
     string GetPeerAddr();
     uint16_t GetPeerPortNumber();
@@ -84,10 +84,7 @@ class UDPSocket:public BaseSocket
 {
 public:
     UDPSocket(const string host,const string port);
-    void Bind()
-    {
-        BaseSocket::Bind();
-    }
+
     int RecvFrom(char*buf,int size,int flag=0,sockaddr *peer=NULL);
     int RecvFromAll(char*buf,int size,int flag=0,sockaddr *peer=NULL);
     int SendTo(const char*buf,int size,int flag=0,const sockaddr *peer=NULL);
@@ -101,10 +98,7 @@ protected:
     TCPSocket(int sockfd,sockaddr t,int queue=16);
 public:
     TCPSocket(const string host,const string port,int queue=16);
-    void Bind()
-    {
-        BaseSocket::Bind();
-    }
+
     TCPSocket* Accept();
     bool Listen();
     bool Connect();

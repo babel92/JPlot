@@ -5,25 +5,31 @@
 #include <iostream>
 #include <string>
 
+#define INTERNAL
+
 JPlot Instance;
 
-int JPlot_Run()
+int JPlot_Run()INTERNAL
 {
+#ifdef WIN32
 	HINSTANCE ret = ShellExecute(NULL, L"open", L"JPlot.exe", NULL, NULL, SW_NORMAL);
 	return (int)ret > 32;
+#elif LINUX
+
+#endif
 }
 
-IPCObj JPlot_SetupEvent()
+IPCObj JPlot_SetupEvent()INTERNAL
 {
 	return IPCHelper::CreateIPCEvent("JPlotEVENT");
 }
 
-void JPlot_DestroyEvent(IPCObj Event)
+void JPlot_DestroyEvent(IPCObj Event)INTERNAL
 {
 	IPCHelper::DestroyIPCEvent(Event);
 }
 
-int JPlot_WaitStartupWithTimeout(IPCObj Event, int Milli)
+int JPlot_WaitStartupWithTimeout(IPCObj Event, int Milli)INTERNAL
 {
 	return IPCHelper::WaitOnIPCEvent(Event, Milli);
 }
@@ -50,13 +56,6 @@ int JPlot_Init()
 	Instance = Conn;
 	return 1;
 }
-
-enum JPCOMMAND
-{
-	JPNEWF,
-	JPDRAW,
-	JPFREE
-};
 
 #define ARGCHAR va_arg(args,char)
 #define ARGINT va_arg(args,int)
@@ -107,11 +106,11 @@ std::string JPlot_Command(int Command, ...)
 	
 }
 
-JGraph JPlot_NewPlot(char GraphType)
+JGraph JPlot_NewPlot(string GraphName, string XLabel, string YLabel, char GraphType)
 {
 	JGraph ret = new JGraph_ctx;
 	ret->GraphType = GraphType;
-	ret->ID = std::stoi(JPlot_Command(JPNEWF, GraphType, "Nima", "X", "Y", 0));
+	ret->ID = std::stoi(JPlot_Command(JPNEWF, GraphType, GraphName.c_str(), XLabel.c_str(), YLabel.c_str(), 0));
 	return ret;
 }
 

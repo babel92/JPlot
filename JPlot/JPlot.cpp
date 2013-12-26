@@ -36,7 +36,11 @@ std::condition_variable EvtNewClient;
 void IPCListener()
 {
 	TCPSocket Server("localhost", JPLOT_PORT);
-	Server.Bind();
+	if (!Server.Bind())
+	{
+		cerr << "Port " << JPLOT_PORT << " occupied. Exit.\n";
+		exit(1);
+	}
 	Server.Listen();
 	void* IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
 	if (IPCEvent != (void*)-1)
@@ -288,7 +292,8 @@ int main(int argc, char* argv[])
 	Win.resizable(Win);
 	Win.size_range(300, 200);
 	Win.show();
-	//Fl::add_timeout(0, TimerFunc);
+	Fl::add_timeout(0, TimerFunc);
+
 	int Ret = Fl::run();
 
 	NetHelper::Cleanup();
