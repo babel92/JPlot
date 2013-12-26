@@ -182,6 +182,12 @@ public:
 		*M_ptr++ = Ch;
 		return *this;
 	}
+	FieldFiller& Buf(void* Ptr, int Size)
+	{
+		memcpy(M_ptr, Ptr, Size);
+		M_ptr += Size;
+		return *this;
+	}
 	int Pos(){ return M_ptr - M_orig; }
 	void Reset(){ M_ptr = M_orig; }
 	void* Ptr(){ return (void*)M_ptr; }

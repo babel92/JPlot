@@ -216,8 +216,6 @@ TCPSocket* TCPSocket::Accept()
 bool TCPSocket::Listen()
 {
     int ret=listen(m_sockfd, m_queue);
-    if(-1==ret)
-        cerr<<"Listen() failed. NetHelper::GetLastError: "<<NetHelper::GetLastError()<<endl;
     return ret==0;
 }
 
@@ -225,7 +223,6 @@ bool TCPSocket::Connect()
 {
     if(-1==connect(m_sockfd, m_target.ai_addr, m_target.ai_addrlen))
     {
-        cerr<<"Connect() failed. NetHelper::GetLastError: "<<NetHelper::GetLastError()<<endl;
         return 0;
     }
     return 1;

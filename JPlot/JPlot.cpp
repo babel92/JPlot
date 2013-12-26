@@ -20,6 +20,7 @@
 #include "PlotterFactory.h"
 #include "safecall.h"
 #include "IPC.h"
+#include "JPlot.h"
 
 #ifdef WIN32
 #include <Windows.h>
@@ -34,7 +35,7 @@ std::condition_variable EvtNewClient;
 
 void IPCListener()
 {
-	TCPSocket Server("localhost", "64129");
+	TCPSocket Server("localhost", JPLOT_PORT);
 	Server.Bind();
 	Server.Listen();
 	void* IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
@@ -62,6 +63,8 @@ void IPCListener()
 int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize);
 bool Exit = 0;
 
+#define DELETE_ENTRY 10
+
 void RequestListener()
 {
 	Multiplexer Mul;
@@ -78,20 +81,28 @@ void RequestListener()
 		for (auto Client : ClientList)
 			Mul.Add(*Client);
 		Mul.Select();
-
-		for (auto Client:ClientList)
-		if (Mul.Check(*Client))
+		auto it = ClientList.begin();
+		while ( it < ClientList.end())
 		{
-			char Buffer[10240];
-			int RecvSize = Client->Recv(Buffer, 10240);
-			if (RecvSize < 0)
+			TCPSocket*Client = (*it);
+			if (Mul.Check(*Client))
 			{
-				// Disconnect
+				char Buffer[10240];
+				int RecvSize = Client->Recv(Buffer, 10240);
+				if (RecvSize < 0)
+				{
+					// Disconnect
+					std::cout << "Disconnected\n";
+					Client->Shutdown();
+					it = ClientList.erase(it);
+					continue;
+				}
+				else
+				{
+					RequestHandler(Client, Buffer, RecvSize);
+				}
 			}
-			else
-			{
-				RequestHandler(Client, Buffer, RecvSize);
-			}
+			it++;
 		}
 
 	}
@@ -127,7 +138,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 {
 	FieldRetriver Header(Request);
 	std::string&& Cmd = Header.String(4);
-	cout<<Request<<endl;
+	//cout<<Request<<endl;
 	if (Cmd == "NEWF")
 	{
 		SIZE_GUARD(57);
@@ -173,7 +184,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 			// Seems this is the only way to hide window from another thread
 			Invoke(WRAPCALL(PlotterFactory::FreePlotter, FreeID));
 			Client->Send("OK");
-			return 0;
+			return DELETE_ENTRY;
 		}
 		Client->Send("NEG NOFIG");
 	}

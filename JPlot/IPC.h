@@ -9,27 +9,30 @@
 #include <semaphore.h>
 #endif
 
+typedef void* IPCObj;
+#define IPC_FAIL ((IPCObj)-1)
+
 class IPCHelper
 {
 public:
-	static void* CreateIPCEvent(const char*Name)
+	static IPCObj CreateIPCEvent(const char*Name)
 	{
 #ifdef WIN32
 		HANDLE Event = ::CreateEventA(NULL, 0, 0, Name);
 		if (::GetLastError() == ERROR_ALREADY_EXISTS)
 		{
 			::CloseHandle(Event);
-			return (void*)-1;
+			return (IPCObj)-1;
 		}
 		else
-			return (void*)Event;
+			return (IPCObj)Event;
 #elif LINUX
 		sem_t* ret=sem_open(Name,O_CREAT|O_EXCL,S_IROTH|S_IWOTH,1);
 		return (ret!=SEM_FAILED)?(void*)ret:(void*)-1;
 #endif
 	}
 
-	static void DestroyIPCEvent(void* Event)
+	static void DestroyIPCEvent(IPCObj Event)
 	{
 #ifdef WIN32
 		CloseHandle((HANDLE)Event);
@@ -38,27 +41,27 @@ public:
 #endif
 	}
 
-	static void* FindIPCEvent(const char*Name)
+	static IPCObj FindIPCEvent(const char*Name)
 	{
 #ifdef WIN32
 		HANDLE Event = ::CreateEventA(NULL, 0, 0, Name);
 		if (::GetLastError() != ERROR_ALREADY_EXISTS)
 		{
 			::CloseHandle(Event);
-			return (void*)-1;
+			return (IPCObj)-1;
 		}
 		else
-			return (void*)Event;
+			return (IPCObj)Event;
 #elif LINUX
 		sem_t*ret=sem_open(Name,0);
 		return (ret!=SEM_FAILED)?(void*)ret:(void*)-1;
 #endif
 	}
 
-	static int WaitOnIPCEvent(void* Event,int MilliSec=0)
+	static int WaitOnIPCEvent(IPCObj Event, int MilliSec = 0)
 	{
 #ifdef WIN32
-		return WAIT_FAILED == ::WaitForSingleObject((HANDLE)Event, MilliSec==0?INFINITE:MilliSec);
+		return WAIT_FAILED != ::WaitForSingleObject((HANDLE)Event, MilliSec==0?INFINITE:MilliSec);
 #elif LINUX
 		timespec tm={0};
 		if(MilliSec==0)
@@ -72,7 +75,7 @@ public:
 #endif
 	}
 
-	static void SignalIPCEvent(void* Event)
+	static void SignalIPCEvent(IPCObj Event)
 	{
 #if WIN32
 		PulseEvent((HANDLE)Event);

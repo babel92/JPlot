@@ -87,6 +87,7 @@
   <ItemGroup>
     <ClInclude Include="Cartesian.H" />
     <ClInclude Include="IPC.h" />
+    <ClInclude Include="JPlot.h" />
     <ClInclude Include="netlayer.h" />
     <ClInclude Include="Plotter.h" />
     <ClInclude Include="PlotterFactory.h" />
@@ -95,6 +96,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="API.cpp" />
     <ClCompile Include="Cartesian.cpp" />
     <ClCompile Include="JPlot.cpp" />
     <ClCompile Include="netlayer.cpp" />
