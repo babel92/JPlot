@@ -8,6 +8,10 @@
 #define INTERNAL
 
 JPlot Instance;
+const char* JPGraphName[] =
+{
+	"2D"
+};
 
 int JPlot_Run()INTERNAL
 {
@@ -79,7 +83,7 @@ std::string JPlot_Command(int Command, ...)
 	{
 	case JPNEWF:
 		MsgBuilder.String("NEWF");
-		MsgBuilder.Char(ARGCHAR);
+		MsgBuilder.Int(ARGINT);
 		MsgBuilder.String(ARGPTR, 16);
 		MsgBuilder.String(ARGPTR, 16);
 		MsgBuilder.String(ARGPTR, 16);
@@ -90,10 +94,12 @@ std::string JPlot_Command(int Command, ...)
 			MsgBuilder.String("DRAW");
 			MsgBuilder.Int(ARGINT);
 			MsgBuilder.Int(ARGINT);
-			MsgBuilder.Int(ARGINT);
+			int Type = ARGINT; // Data type
+			MsgBuilder.Int(Type); 
 			int Size = ARGINT;
 			MsgBuilder.Int(Size);
-			MsgBuilder.Buf(ARGPTR, Size);
+			// Buffer size needs to be handled according to type size here
+			MsgBuilder.Buf(ARGPTR, Size * sizeof(float));
 			break;
 		}
 	case JPFREE:
@@ -125,15 +131,16 @@ std::string JPlot_Command(int Command, ...)
 	}
 	va_end(args);
 	Socket->Send(SendBuffer, MsgBuilder.Pos());
-	return{ SendBuffer, (size_t)Socket->Recv(SendBuffer, 8192) };
-	
+	size_t RetSize = Socket->Recv(SendBuffer, 8192);
+	return{ SendBuffer, RetSize >= 16 || RetSize < 0 ? 0 : RetSize };
 }
 
-JGraph JPlot_NewPlot(string GraphName, string XLabel, string YLabel, char GraphType)
+JGraph JPlot_NewPlot(string GraphName, string XLabel, string YLabel, int GraphType)
 {
+	int ID = std::stoi(JPlot_Command(JPNEWF, GraphType, GraphName.c_str(), XLabel.c_str(), YLabel.c_str(), 0));
 	JGraph ret = new JGraph_ctx;
 	ret->GraphType = GraphType;
-	ret->ID = std::stoi(JPlot_Command(JPNEWF, GraphType, GraphName.c_str(), XLabel.c_str(), YLabel.c_str(), 0));
+	ret->ID = ID;
 	return ret;
 }
 

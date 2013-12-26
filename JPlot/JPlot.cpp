@@ -28,7 +28,7 @@
 #include <signal.h>
 #endif
 
-std::vector<TCPSocket*> ClientList;
+std::vector<Client*> ClientList;
 std::mutex MuClient;
 
 std::condition_variable EvtNewClient;
@@ -48,14 +48,15 @@ void IPCListener()
 
 	for (;;)
 	{
-		TCPSocket* Incoming=Server.Accept();
+		Client* Incoming = new Client;
+		Incoming->Socket = Server.Accept();
 		if (Incoming == NULL)
 		{
 			// Interrupted by Cleanup()
 			return;
 		}
 		ClientList.push_back(Incoming);
-		Incoming->Send("JPLOTIPC");
+		Incoming->Socket->Send("JPLOTIPC");
 
 		{
 			std::lock_guard<std::mutex> lock(MuClient);
@@ -64,9 +65,9 @@ void IPCListener()
 	}
 }
 
-int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize);
+int RequestHandler(Client*Peer, const char*Request, int ReqSize);
+int FindAndDeleteUIEntry(int FreeID, int ThreadSafe = 0);
 bool Exit = 0;
-
 
 void RequestListener()
 {
@@ -82,12 +83,12 @@ void RequestListener()
 		Mul.Zero();
 
 		for (auto Client : ClientList)
-			Mul.Add(*Client);
+			Mul.Add(*Client->Socket);
 		Mul.Select();
 		
 		for (auto it = ClientList.begin(); it < ClientList.end();)
 		{
-			TCPSocket*Client = (*it);
+			TCPSocket*Client = (*it)->Socket;
 			if (Mul.Check(*Client))
 			{
 				char Buffer[10240];
@@ -96,12 +97,17 @@ void RequestListener()
 				{
 					// Disconnect
 					Client->Shutdown();
+					for (int ID : (*it)->GraphList)
+					{
+						FindAndDeleteUIEntry(ID, 1);
+						Invoke(WRAPCALL(PlotterFactory::FreePlotter, ID));
+					}
 					it = ClientList.erase(it);
 					continue;
 				}
 				else
 				{
-					RequestHandler(Client, Buffer, RecvSize);
+					RequestHandler(*it, Buffer, RecvSize);
 				}
 			}
 			it++;

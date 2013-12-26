@@ -7,6 +7,7 @@
 #include "PlotterFactory.h"
 #include "safecall.h"
 #include "JPlot.h"
+
 extern Fl_Hold_Browser* PtrBrow;
 
 int FindAndDeleteUIEntry(int FreeID, int ThreadSafe = 0)
@@ -28,28 +29,29 @@ int FindAndDeleteUIEntry(int FreeID, int ThreadSafe = 0)
 
 #define DELETE_ENTRY 10
 
-#define SND(str)	Client->Send(str);
+#define SND(str)	Peer->Socket->Send(str);
 #define SNDERR(err) SND("NEG "err)
 #define SNDACK()	SND("OK")
 #define SIZE_GUARD(Size) \
 if (ReqSize < Size)\
 {\
-	Client->Send("NEG SZERROR"); \
+	SNDERR("SZERROR"); \
 	return 0; \
 }
 
-int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
+int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 {
+
 	FieldRetriver Header(Request);
 	std::string&& Cmd = Header.String(4);
 	//cout<<Request<<endl;
 	if (Cmd == "NEWF")
 	{
-		SIZE_GUARD(57);
-		char Type = Header.Char();
+		SIZE_GUARD(60);
+		int Type = Header.Int();
 		switch (Type)
 		{
-		case 'a':
+		case JP2D:
 			{
 				std::string&& FigName = Header.String(16);
 				std::string&& XName = Header.String(16);
@@ -67,15 +69,14 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 					Wnd->SetTitle(FigName.c_str());
 					Wnd->SetXText(XName.c_str());
 					Wnd->SetYText(YName.c_str());
-					PtrBrow->add((IDStr + '\t' + std::to_string(Type)).c_str(), (void*)ID);
+					PtrBrow->add((IDStr + '\t' + JPGraphName[Type]).c_str(), (void*)ID);
+					Peer->GraphList.push_back(ID);
 					SND(IDStr);
 				}));
 				break;
 				}
 		default:
-			{
-				SNDERR("TYPEERR");
-			   }
+			SNDERR("TYPEERR");
 			break;
 		}
 
@@ -83,6 +84,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 	else if (Cmd == "SETF")
 	{
 		// SETTING, ID , PARA1 , PARA2
+		SIZE_GUARD(16);
 		int Setting = Header.Int();
 		Plotter* Plot = PlotterFactory::GetPlotter(Header.Int());
 		switch (Setting)
@@ -97,7 +99,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 				Fl::unlock();
 				SNDACK();
 				break;
-					 }
+			}
 		case JPYRANGE:
 			{
 				float YMin = Header.Float();
@@ -108,7 +110,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 				Fl::unlock();
 				SNDACK();
 				break;
-					 }
+			}
 		default:
 			SNDERR("NOSETTING");
 			break;
@@ -121,6 +123,11 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 		{
 			// Seems this is the only way to hide window from another thread
 			Invoke(WRAPCALL(PlotterFactory::FreePlotter, FreeID));
+			Peer->GraphList.erase(std::remove(
+				Peer->GraphList.begin(), 
+				Peer->GraphList.end(), FreeID), 
+				Peer->GraphList.end());
+
 			SNDACK();
 			return DELETE_ENTRY;
 		}
@@ -133,7 +140,7 @@ int RequestHandler(TCPSocket*Client, const char*Request, int ReqSize)
 		Plotter* Plt = PlotterFactory::GetPlotter(ID);
 		if (Plt == NULL)
 		{
-			Client->Send("NEG NOFIG");
+			SNDERR("NOFIG");
 			return 0;
 		}
 		int Arg = Header.Int();
