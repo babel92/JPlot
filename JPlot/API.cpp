@@ -9,7 +9,7 @@ JPlot Instance;
 
 int JPlot_Run()
 {
-	HINSTANCE ret = ShellExecute(NULL, L"open", L"..\\..\\JPlot\\Debug\\JPlot.exe", NULL, NULL, SW_NORMAL);
+	HINSTANCE ret = ShellExecute(NULL, L"open", L"JPlot.exe", NULL, NULL, SW_NORMAL);
 	return (int)ret > 32;
 }
 
@@ -25,7 +25,7 @@ void JPlot_DestroyEvent(IPCObj Event)
 
 int JPlot_WaitStartupWithTimeout(IPCObj Event, int Milli)
 {
-	return IPCHelper::WaitOnIPCEvent(Event, 1000);
+	return IPCHelper::WaitOnIPCEvent(Event, Milli);
 }
 
 int JPlot_Init()

@@ -81,8 +81,8 @@ void RequestListener()
 		for (auto Client : ClientList)
 			Mul.Add(*Client);
 		Mul.Select();
-		auto it = ClientList.begin();
-		while ( it < ClientList.end())
+		
+		for (auto it = ClientList.begin(); it < ClientList.end();)
 		{
 			TCPSocket*Client = (*it);
 			if (Mul.Check(*Client))
@@ -92,7 +92,6 @@ void RequestListener()
 				if (RecvSize < 0)
 				{
 					// Disconnect
-					std::cout << "Disconnected\n";
 					Client->Shutdown();
 					it = ClientList.erase(it);
 					continue;
