@@ -102,7 +102,7 @@ public:
     void Clear(BaseSocket&socket){FD_CLR(socket.m_sockfd,&m_set);}
     void Zero(){FD_ZERO(&m_set);}
     void Add(BaseSocket&socket){FD_SET(socket.m_sockfd,&m_set);}
-    bool Check(BaseSocket&socket){return FD_ISSET(socket.m_sockfd,&m_set);}
+    int Check(BaseSocket&socket){return FD_ISSET(socket.m_sockfd,&m_set);}
     int Select(){return select(0,&m_set,NULL,NULL,NULL);}
 };
 

@@ -109,6 +109,7 @@
     <ClCompile Include="netlayer.cpp" />
     <ClCompile Include="Plotter.cpp" />
     <ClCompile Include="PlotterFactory.cpp" />
+    <ClCompile Include="Request.cpp" />
     <ClCompile Include="safecall.cpp" />
     <ClCompile Include="stdafx.cpp" />
   </ItemGroup>

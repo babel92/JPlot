@@ -60,7 +60,8 @@ int JPlot_Init()
 #define ARGCHAR va_arg(args,char)
 #define ARGINT va_arg(args,int)
 #define ARGPTR va_arg(args,char*)
-#define ARGFLT va_arg(args,double) // float is prompted to double
+#define ARGDBL va_arg(args,double)
+#define ARGFLT ((float)ARGDBL) // float is promoted to double
 
 std::string JPlot_Command(int Command, ...)
 {
