@@ -127,8 +127,8 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 			Peer->GraphList.erase(std::remove(
 				Peer->GraphList.begin(), 
 				Peer->GraphList.end(), FreeID), 
-				Peer->GraphList.end());
-
+				Peer->GraphList.end()
+			);
 			SNDACK();
 			return DELETE_ENTRY;
 		}
@@ -160,11 +160,19 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 			case JP2COORD:
 				Plt->Plot2D((float(*)[2])Header.Ptr(), Size);
 				break;
+			case JP2COORDSEP:
+				{
+					float* X = (float*)Header.Ptr();
+					Plt->Plot2D(X, X + Size, Size);
+					break;
+				}
 			}
 			break;
 		}
+		/*
 		if (Arg == 1)
 			Fl::awake();
+		*/
 		Fl::unlock();
 		SNDACK();
 	}

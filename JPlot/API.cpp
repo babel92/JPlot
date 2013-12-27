@@ -116,11 +116,24 @@ std::string JPlot_Command(int Command, ...)
 			switch (ctx->GraphType)
 			{
 			case JP2D:
-				if (Arg == JP2COORD)
+				switch (Arg)
+				{
+				case JP2COORD:
 					CalculatedSize *= 2;
+				case JP1COORD:
+					MsgBuilder.Buf(ARGPTR(char*), CalculatedSize);
+					break;
+				case JP2COORDSEP:
+					{
+						float** PtrArr = ARGPTR(float**);
+						MsgBuilder.Buf(PtrArr[0], CalculatedSize);
+						MsgBuilder.Buf(PtrArr[1], CalculatedSize);
+						break;
+					}
+				}
 				break;
 			}
-			MsgBuilder.Buf(ARGPTR(char*), CalculatedSize);
+			
 			break;
 		}
 	case JPFREE:
@@ -181,6 +194,12 @@ int JPlot_Draw(JGraph J, float* Buf, int Size)
 int JPlot_Draw2(JGraph J, float (*Buf)[2], int Size)
 {
 	return JPlot_DrawBase(J, JP2COORD, JPFLOAT, Buf, Size);
+}
+
+int JPlot_Draw2(JGraph J, float*X, float*Y, int Size)
+{
+	float* PtrArr[2] = { X, Y };
+	return JPlot_DrawBase(J, JP2COORDSEP, JPFLOAT, PtrArr, Size);
 }
 
 int JPlot_Close(JGraph J)
