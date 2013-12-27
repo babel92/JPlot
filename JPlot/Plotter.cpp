@@ -117,15 +117,31 @@ void Plotter::Plot(Real*buf,int size)
     //delete[] buf;
 }
 
+
+void Plotter::Plot2D(Real(*data)[2], int size)
+{
+	if (m_canvas == NULL)
+		return;
+	Ca_LinePoint* lp = NULL;
+	Ca_Canvas::current(m_canvas);
+	m_y->current();
+	m_canvas->clear();
+	for (int i = 0; i < size; ++i)
+		lp = new Ca_LinePoint(lp, data[i][0], data[i][1], 0, FL_BLUE);
+	redraw();
+}
+
 void Plotter::Plot2D(Real*data1,Real*data2,int size)
 {
+	if (m_canvas == NULL)
+		return;
     Ca_LinePoint* lp=NULL;
     Ca_Canvas::current(m_canvas);
     m_y->current();
     m_canvas->clear();
     for(int i=0;i<size;++i)
         lp=new Ca_LinePoint(lp,data1[i],data2[i],0,FL_BLUE);
-    m_canvas->redraw();
+    redraw();
 }
 
 Plotter::~Plotter()

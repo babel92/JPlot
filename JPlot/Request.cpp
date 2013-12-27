@@ -61,6 +61,7 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 					int ID = PlotterFactory::AllocPlotter(Type);
 					std::string&& IDStr = std::to_string(ID);
 					Plotter* Wnd = PlotterFactory::GetPlotter(ID);
+					Wnd->SetData((void*)Type);
 					Wnd->callback([](Fl_Widget*Wid, void*Arg){
 						((Fl_Window*)Wid)->hide();
 						PlotterFactory::FreePlotter((long)Arg);
@@ -69,7 +70,7 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 					Wnd->SetTitle(FigName.c_str());
 					Wnd->SetXText(XName.c_str());
 					Wnd->SetYText(YName.c_str());
-					PtrBrow->add((IDStr + '\t' + JPGraphName[Type]).c_str(), (void*)ID);
+					PtrBrow->add((IDStr + '\t' + JPGraphName[Type] + '\t' + FigName.c_str()).c_str(), (void*)ID);
 					Peer->GraphList.push_back(ID);
 					SND(IDStr);
 				}));
@@ -148,7 +149,20 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 		int Size = Header.Int();
 
 		Fl::lock();
-		Plt->Plot((float*)Header.Ptr(), Size);
+		switch ((int)Plt->GetData())
+		{
+		case JP2D:
+			switch (Arg)
+			{
+			case JP1COORD:
+				Plt->Plot((float*)Header.Ptr(), Size);
+				break;
+			case JP2COORD:
+				Plt->Plot2D((float(*)[2])Header.Ptr(), Size);
+				break;
+			}
+			break;
+		}
 		if (Arg == 1)
 			Fl::awake();
 		Fl::unlock();

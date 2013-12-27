@@ -63,7 +63,7 @@ int JPlot_Init()
 
 #define ARGCHAR va_arg(args,char)
 #define ARGINT va_arg(args,int)
-#define ARGPTR va_arg(args,char*)
+#define ARGPTR(TYPE) va_arg(args,TYPE)
 #define ARGDBL va_arg(args,double)
 #define ARGFLT ((float)ARGDBL) // float is promoted to double
 
@@ -84,22 +84,43 @@ std::string JPlot_Command(int Command, ...)
 	case JPNEWF:
 		MsgBuilder.String("NEWF");
 		MsgBuilder.Int(ARGINT);
-		MsgBuilder.String(ARGPTR, 16);
-		MsgBuilder.String(ARGPTR, 16);
-		MsgBuilder.String(ARGPTR, 16);
+		MsgBuilder.String(ARGPTR(char*), 16);
+		MsgBuilder.String(ARGPTR(char*), 16);
+		MsgBuilder.String(ARGPTR(char*), 16);
 		MsgBuilder.Int(ARGINT);
 		break; 
 	case JPDRAW:
 		{
-			MsgBuilder.String("DRAW");
-			MsgBuilder.Int(ARGINT);
-			MsgBuilder.Int(ARGINT);
+			JGraph ctx = ARGPTR(JGraph); // Graph context
+			int Arg = ARGINT; // Arg
 			int Type = ARGINT; // Data type
+			int Size = ARGINT; // Size
+			MsgBuilder.String("DRAW");
+			MsgBuilder.Int(ctx->ID); 
+			MsgBuilder.Int(Arg); 
 			MsgBuilder.Int(Type); 
-			int Size = ARGINT;
 			MsgBuilder.Int(Size);
-			// Buffer size needs to be handled according to type size here
-			MsgBuilder.Buf(ARGPTR, Size * sizeof(float));
+			int CalculatedSize = Size;
+			switch (Type)
+			{
+			case JPFLOAT:
+				CalculatedSize *= sizeof(float);
+				break;
+			case JPDOUBLE:
+				CalculatedSize *= sizeof(double);
+				break;
+			case JPINT:
+				CalculatedSize *= sizeof(int);
+				break;
+			}
+			switch (ctx->GraphType)
+			{
+			case JP2D:
+				if (Arg == JP2COORD)
+					CalculatedSize *= 2;
+				break;
+			}
+			MsgBuilder.Buf(ARGPTR(char*), CalculatedSize);
 			break;
 		}
 	case JPFREE:
@@ -144,14 +165,22 @@ JGraph JPlot_NewPlot(string GraphName, string XLabel, string YLabel, int GraphTy
 	return ret;
 }
 
-int JPlot_Draw(JGraph J, float* Buf, int Size)
+int JPlot_DrawBase(JGraph J, int Arg, int Type, void* Buf, int Size)INTERNAL
 {
 	if (!J || Size <= 0)
 		return 0;
-	int Arg = 0;
-	int Type = 0;
-	JPlot_Command(JPDRAW, J->ID, Arg, Type, Size, Buf);
+	JPlot_Command(JPDRAW, J, Arg, Type, Size, Buf);
 	return 1;
+}
+
+int JPlot_Draw(JGraph J, float* Buf, int Size)
+{
+	return JPlot_DrawBase(J, JP1COORD, JPFLOAT, Buf, Size);
+}
+
+int JPlot_Draw2(JGraph J, float (*Buf)[2], int Size)
+{
+	return JPlot_DrawBase(J, JP2COORD, JPFLOAT, Buf, Size);
 }
 
 int JPlot_Close(JGraph J)

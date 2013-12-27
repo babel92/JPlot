@@ -26,6 +26,7 @@ class Plotter:public Fl_Double_Window
         void SetBGColor(float R,float G,float B);
         void Plot(Real*buf,int size);
         void Plot2D(Real*data1,Real*data2,int size);
+		void Plot2D(Real (*data)[2], int size);
 
         void SetXText(const char*label){m_x->copy_label(label);}
         void SetXMin(double num){m_x->minimum(num);}
@@ -33,10 +34,12 @@ class Plotter:public Fl_Double_Window
         void SetYText(const char*label){m_y->copy_label(label);}
         void SetYMin(double num){m_y->minimum(num);}
         void SetYMax(double num){m_y->maximum(num);}
-
         void SetTitle(const char*title){copy_label(title);}
+		void SetData(void*Data){ M_data = Data; }
+		void* GetData(){ return M_data; }
         virtual ~Plotter();
     protected:
+		void* M_data;
     private:
 
         double m_xmin,m_xmax,m_ymin,m_ymax;

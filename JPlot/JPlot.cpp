@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
 	Group.align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
 	Fl_Hold_Browser listview(10, 10, 380, 280);
 	PtrBrow = &listview;
-	listview.add("ID\tType",(void*)-1);
+	listview.add("ID\tType\tTitle",(void*)-1);
 	listview.align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
 	Group.add_resizable(listview);
 	Group.end();
