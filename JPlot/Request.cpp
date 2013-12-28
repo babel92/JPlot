@@ -2,7 +2,7 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Hold_Browser.H>
 #include <string>
-
+#include <algorithm>
 #include "netlayer.h"
 #include "PlotterFactory.h"
 #include "safecall.h"
@@ -149,7 +149,7 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 		int Size = Header.Int();
 
 		Fl::lock();
-		switch ((int)Plt->GetData())
+		switch ((long)Plt->GetData())
 		{
 		case JP2D:
 			switch (Arg)

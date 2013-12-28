@@ -30,8 +30,11 @@
 
 std::vector<Client*> ClientList;
 std::mutex MuClient;
-
 std::condition_variable EvtNewClient;
+
+int RequestHandler(Client*Peer, const char*Request, int ReqSize);
+int FindAndDeleteUIEntry(int FreeID, int ThreadSafe = 0);
+bool Exit = 0;
 
 void IPCListener()
 {
@@ -50,9 +53,15 @@ void IPCListener()
 	{
 		Client* Incoming = new Client;
 		Incoming->Socket = Server.Accept();
-		if (Incoming == NULL)
+		if (Incoming == NULL || Exit)
 		{
 			// Interrupted by Cleanup()
+			Incoming->Socket->Shutdown();
+			Server.Shutdown();
+			{
+				std::lock_guard<std::mutex> lock(MuClient);
+				EvtNewClient.notify_one();
+			}
 			return;
 		}
 		ClientList.push_back(Incoming);
@@ -65,9 +74,6 @@ void IPCListener()
 	}
 }
 
-int RequestHandler(Client*Peer, const char*Request, int ReqSize);
-int FindAndDeleteUIEntry(int FreeID, int ThreadSafe = 0);
-bool Exit = 0;
 
 void RequestListener()
 {
@@ -79,7 +85,10 @@ void RequestListener()
 		if (ClientList.size() == 0)
 		{
 			EvtNewClient.wait(LckNewClient);
+			if(Exit)
+				return;
 		}
+
 		Mul.Zero();
 
 		for (auto Client : ClientList)
@@ -171,7 +180,11 @@ int main(int argc, char* argv[])
 	sigaction(SIGINT, &sigIntHandler, NULL);
 	atexit(onExit);
 #endif
-	Win.callback([](Fl_Widget*Wid, void*Arg){
+	Win.callback([&](Fl_Widget*Wid, void*Arg){
+		Exit = 1;
+		TCPSocket UnblockAccept("localhost", JPLOT_PORT);
+		UnblockAccept.Connect();
+		UnblockAccept.Shutdown();
 		PlotterFactory::Cleanup();
 		((Fl_Window*)Wid)->hide();
 	});
@@ -193,7 +206,6 @@ int main(int argc, char* argv[])
 	int Ret = Fl::run();
 
 	NetHelper::Cleanup();
-	Exit = 1;
 	EvtNewClient.notify_one();
 	ThrdIPCListener.join();
 	ThrdReqListener.join();

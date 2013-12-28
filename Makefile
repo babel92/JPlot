@@ -1,5 +1,5 @@
-CPP=g++
-CPPFLAGS=-c -IJPlot/ -std=c++11 -DLINUX
+CPP=g++-4.8
+CPPFLAGS=-c -IJPlot/ -std=c++11 -DLINUX -g
 LIBS=`fltk-config --ldflags`
 OBJDIR=obj
 SRCS=$(wildcard JPlot/*.cpp)
@@ -10,6 +10,9 @@ $(OBJDIR)/%.o: JPlot/%.cpp
 
 all: $(OBJS)
 	$(CPP) $(OBJS) $(LIBS)
+
+clean:
+	rm -rf obj
 
 $(OBJS): | $(OBJDIR)
 
