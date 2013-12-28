@@ -33,7 +33,7 @@ std::mutex MuClient;
 std::condition_variable EvtNewClient;
 
 int RequestHandler(Client*Peer, const char*Request, int ReqSize);
-int FindAndDeleteUIEntry(int FreeID, int ThreadSafe = 0);
+int FindAndDeleteUIEntry(long FreeID, int ThreadSafe = 0);
 bool Exit = 0;
 
 void IPCListener()

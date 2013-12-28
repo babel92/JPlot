@@ -10,7 +10,7 @@
 
 extern Fl_Hold_Browser* PtrBrow;
 
-int FindAndDeleteUIEntry(int FreeID, int ThreadSafe = 0)
+int FindAndDeleteUIEntry(long FreeID, int ThreadSafe = 0)
 {
 	for (int i = 1; i <= PtrBrow->size(); ++i)
 	{
@@ -30,7 +30,7 @@ int FindAndDeleteUIEntry(int FreeID, int ThreadSafe = 0)
 #define DELETE_ENTRY 10
 
 #define SND(str)	Peer->Socket->Send(str);
-#define SNDERR(err) SND("NEG "err)
+#define SNDERR(err) SND("NEG " err)
 #define SNDACK()	SND("OK")
 #define SIZE_GUARD(Size) \
 if (ReqSize < Size)\
@@ -48,7 +48,7 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 	if (Cmd == "NEWF")
 	{
 		SIZE_GUARD(60);
-		int Type = Header.Int();
+		long Type = Header.Int();
 		switch (Type)
 		{
 		case JP2D:
@@ -58,7 +58,7 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 				std::string&& YName = Header.String(16);
 				int Arg = Header.Int();
 				Invoke(WRAPCALL([=]{
-					int ID = PlotterFactory::AllocPlotter(Type);
+					long ID = PlotterFactory::AllocPlotter(Type);
 					std::string&& IDStr = std::to_string(ID);
 					Plotter* Wnd = PlotterFactory::GetPlotter(ID);
 					Wnd->SetData((void*)Type);
