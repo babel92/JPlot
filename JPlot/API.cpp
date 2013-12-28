@@ -19,7 +19,19 @@ int JPlot_Run()INTERNAL
 	HINSTANCE ret = ShellExecute(NULL, L"open", L"JPlot.exe", NULL, NULL, SW_NORMAL);
 	return (int)ret > 32;
 #elif LINUX
-
+	pid_t plotproc = fork();
+	if(plotproc<0)
+	{
+		fprintf(stderr, "Failed to fork\n");
+		exit(1);
+	}
+	else if(plotproc==0)
+	{
+		execv("jplot",NULL);
+		return 0;
+	}
+	else
+		return 1;
 #endif
 }
 
@@ -49,16 +61,26 @@ int JPlot_Init()
 	{
 		IPCObj Evnt = JPlot_SetupEvent();
 		JPlot_Run();
-		int ret = JPlot_WaitStartupWithTimeout(Evnt, 100);
-		Conn->Connect();
-		Conn->Recv(buf, 512);
+		int ret = JPlot_WaitStartupWithTimeout(Evnt, 0);
+		if(!Conn->Connect())
+		{
+			fprintf(stderr, "Failed to connect: %d\n", errno);
+			exit(1);
+		}
+		if(-1==Conn->Recv(buf, 512))
+			goto fail;
 		Instance = ret ? Conn : NULL;
 		JPlot_DestroyEvent(Evnt);
 		return ret;
 	}
-	Conn->Recv(buf, 512);
+	if(-1==Conn->Recv(buf, 512))
+		goto fail;
+	
 	Instance = Conn;
 	return 1;
+fail:
+	fprintf(stderr,"Socket failure: %d\n",errno);
+	exit(1);
 }
 
 #define ARGCHAR va_arg(args,char)

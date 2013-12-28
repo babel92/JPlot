@@ -5,8 +5,10 @@
 #include <Windows.h>
 #elif LINUX
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <semaphore.h>
+#include <stdio.h>
 #endif
 
 typedef void* IPCObj;
@@ -27,8 +29,14 @@ public:
 		else
 			return (IPCObj)Event;
 #elif LINUX
-		sem_t* ret=sem_open(Name,O_CREAT|O_EXCL,S_IROTH|S_IWOTH,1);
-		return (ret!=SEM_FAILED)?(void*)ret:(void*)-1;
+		
+		sem_t* ret=sem_open(Name,O_CREAT/*|O_EXCL*/,S_IRWXO,1);
+		if(ret==SEM_FAILED)
+		{
+			fprintf(stderr, "Failed to create semaphore: %d\n",errno);
+			return (IPCObj)-1;
+		}
+		return (IPCObj)ret;
 #endif
 	}
 
@@ -65,12 +73,12 @@ public:
 #elif LINUX
 		timespec tm={0};
 		if(MilliSec==0)
-			return sem_wait((sem_t*)Event);
+			return !sem_wait((sem_t*)Event);
 		else
 		{
 			tm.tv_sec=MilliSec/1000;
 			tm.tv_nsec=MilliSec%1000*1000000;
-			return sem_timedwait((sem_t*)Event,&tm);
+			return !sem_timedwait((sem_t*)Event,&tm);
 		}
 #endif
 	}

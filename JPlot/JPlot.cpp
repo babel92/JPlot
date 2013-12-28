@@ -26,6 +26,7 @@
 #include <Windows.h>
 #elif LINUX
 #include <signal.h>
+#include <errno.h>
 #endif
 
 std::vector<Client*> ClientList;
@@ -44,7 +45,15 @@ void IPCListener()
 		cerr << "Port " << JPLOT_PORT << " occupied. Exit.\n";
 		exit(1);
 	}
-	Server.Listen();
+	if(!Server.Listen())
+	{
+		cerr << "Can't listen on port"
+#ifdef LINUX
+		": "<< errno
+#endif
+		<<endl;
+		exit(1);
+	}
 	void* IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
 	if (IPCEvent != (void*)-1)
 		IPCHelper::SignalIPCEvent(IPCEvent);

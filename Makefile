@@ -1,5 +1,5 @@
 CPP=g++-4.8
-CPPFLAGS=-c -IJPlot/ -std=c++11 -DLINUX -g
+CPPFLAGS=-c -IJPlot/ -std=c++11 -DLINUX -ggdb3 -Wall
 LIBS=`fltk-config --ldflags`
 OBJDIR=obj
 SRCS=$(wildcard JPlot/*.cpp)
@@ -9,7 +9,8 @@ $(OBJDIR)/%.o: JPlot/%.cpp
 	$(CPP) $(CPPFLAGS) -o$@ $<
 
 all: $(OBJS)
-	$(CPP) $(OBJS) $(LIBS)
+	$(CPP) -g -o jplot $(OBJS) $(LIBS)
+	ar rs JPLib/libjplot.a obj/API.o obj/netlayer.o
 
 clean:
 	rm -rf obj
