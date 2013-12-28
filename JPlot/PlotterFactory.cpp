@@ -5,7 +5,7 @@ using namespace std;
 
 PlotterFactory::PlotterEntry* PlotterFactory::PlotterList[MAX_PLOTTER] = { NULL };
 
-int PlotterFactory::AllocPlotter(char Type)
+int PlotterFactory::AllocPlotter(long Type)
 {
 	for (int i = 0; i < MAX_PLOTTER; ++i)
 	{
@@ -18,7 +18,7 @@ int PlotterFactory::AllocPlotter(char Type)
 	return -1;
 }
 
-void PlotterFactory::FreePlotter(int ID)
+void PlotterFactory::FreePlotter(long ID)
 {
 	static std::mutex mu;
 	std::lock_guard<std::mutex> lock(mu);
@@ -32,7 +32,7 @@ void PlotterFactory::FreePlotter(int ID)
 	}
 }
 
-Plotter* PlotterFactory::GetPlotter(int ID)
+Plotter* PlotterFactory::GetPlotter(long ID)
 {
 	return (PlotterList[ID] != NULL&&ID < MAX_PLOTTER) ? PlotterList[ID]->Wnd : NULL;
 }
