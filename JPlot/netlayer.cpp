@@ -11,6 +11,7 @@ using namespace std;
 #ifdef WIN32
 #define itoa _itoa
 #elif LINUX
+#include <sys/socket.h>
 char* itoa(int value, char*buf, int bufsize)
 {
 	sprintf(buf,"%d",value);
@@ -62,6 +63,8 @@ BaseSocket::BaseSocket(bool type,const string host,const string port)
                           p->ai_protocol);
         //int m=sizeof m_bufsize;
         //getsockopt(m_sockfd,SOL_SOCKET,SO_RCVBUF,(char *)&m_bufsize, &m);
+	int set = 1;
+	setsockopt(m_sockfd, SOL_SOCKET, MSG_NOSIGNAL, (void *)&set, sizeof(int));
         break;
     }
 }

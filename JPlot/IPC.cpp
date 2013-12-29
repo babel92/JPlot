@@ -1,4 +1,5 @@
 #include "IPC.h"
+#include <semaphore.h>
 
 #ifdef LINUX
 	struct evntobj
@@ -22,7 +23,7 @@
 			return (IPCObj)Event;
 #elif LINUX
 		
-		sem_t* ret=sem_open(Name,O_CREAT/*|O_EXCL*/,S_IRWXO,1);
+		sem_t* ret=sem_open(Name,O_CREAT/*|O_EXCL*/,0777,0);
 		if(ret==SEM_FAILED)
 		{
 			fprintf(stderr, "Failed to create semaphore: %d\n",errno);
@@ -67,13 +68,13 @@ IPCObj IPCHelper::FindIPCEvent(const char*Name)
 		if (::GetLastError() != ERROR_ALREADY_EXISTS)
 		{
 			::CloseHandle(Event);
-			return (IPCObj)-1;
+			return IPC_FAIL;
 		}
 		else
 			return (IPCObj)Event;
 #elif LINUX
-		sem_t*ret=sem_open(Name,0);
-		return (ret!=SEM_FAILED)?(void*)ret:(void*)-1;
+		sem_t*ret=sem_open(Name,O_RDWR,0777,0);
+		return (ret!=SEM_FAILED)?(void*)ret:IPC_FAIL;
 #endif
 	}
 
@@ -99,6 +100,14 @@ void IPCHelper::SignalIPCEvent(IPCObj Event)
 #if WIN32
 		PulseEvent((HANDLE)Event);
 #elif LINUX
-		sem_post((sem_t*)Event);
+int val;
+sem_getvalue((sem_t*)Event,&val);
+printf("value:%d\n",val);
+		if(0!=sem_post((sem_t*)Event))
+		{
+			fprintf(stderr,"Signaling failure: %d\n",errno);
+		}
+sem_getvalue((sem_t*)Event,&val);
+printf("value:%d\n",val);
 #endif
 	}

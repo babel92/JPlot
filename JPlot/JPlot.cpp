@@ -54,8 +54,8 @@ void IPCListener()
 		<<endl;
 		exit(1);
 	}
-	void* IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
-	if (IPCEvent != (void*)-1)
+	IPCObj IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
+	if (IPCEvent != IPC_FAIL)
 		IPCHelper::SignalIPCEvent(IPCEvent);
 
 	for (;;)
@@ -111,7 +111,7 @@ void RequestListener()
 			{
 				char Buffer[10240];
 				int RecvSize = Client->Recv(Buffer, 10240);
-				if (RecvSize < 0)
+				if (RecvSize <= 0)
 				{
 					// Disconnect
 					Client->Shutdown();
@@ -190,6 +190,7 @@ int main(int argc, char* argv[])
 	sigIntHandler.sa_flags = 0;
 	sigaction(SIGINT, &sigIntHandler, NULL);
 	atexit(onExit);
+	signal(SIGPIPE, SIG_IGN);
 #endif
 	Win.callback([&](Fl_Widget*Wid, void*Arg){
 		TCPSocket UnblockAccept("localhost", JPLOT_PORT);

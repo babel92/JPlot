@@ -62,6 +62,10 @@ int JPlot_Init()
 		IPCObj Evnt = JPlot_SetupEvent();
 		JPlot_Run();
 		int ret = JPlot_WaitStartupWithTimeout(Evnt, 0);
+		if(ret!=1)
+		{
+			fprintf(stderr,"Wait failed: %d\n",errno);
+		}
 		JPlot_DestroyEvent(Evnt);
 		if(!Conn->Connect())
 		{
