@@ -174,7 +174,9 @@ int main(int argc, char* argv[])
 {
 	std::thread ThrdReqListener(RequestListener);
 	std::thread ThrdIPCListener(IPCListener);
-	
+	ThrdReqListener.detach();
+	ThrdIPCListener.detach();
+
 	Fl::lock();
 	Fl_Double_Window Win(400, 300, "JPlot Manager");
 	PtrWin = &Win;
@@ -190,7 +192,6 @@ int main(int argc, char* argv[])
 	atexit(onExit);
 #endif
 	Win.callback([&](Fl_Widget*Wid, void*Arg){
-		Exit = 1;
 		TCPSocket UnblockAccept("localhost", JPLOT_PORT);
 		UnblockAccept.Connect();
 		UnblockAccept.Shutdown();
@@ -215,9 +216,10 @@ int main(int argc, char* argv[])
 	int Ret = Fl::run();
 
 	NetHelper::Cleanup();
+	Exit = 1;
 	EvtNewClient.notify_one();
-	ThrdIPCListener.join();
-	ThrdReqListener.join();
+	//ThrdIPCListener.join();
+	//ThrdReqListener.join();
 
 	return Ret;
 }

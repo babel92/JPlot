@@ -97,13 +97,14 @@ class Multiplexer
 private:
     fd_set m_set;
     timeval m_time;
+	int m_max;
 public:
     Multiplexer(long sec=0,long usec=0){m_time.tv_sec=sec;m_time.tv_usec=usec;Zero();}
     void Clear(BaseSocket&socket){FD_CLR(socket.m_sockfd,&m_set);}
-    void Zero(){FD_ZERO(&m_set);}
-    void Add(BaseSocket&socket){FD_SET(socket.m_sockfd,&m_set);}
+    void Zero(){m_max=-1;FD_ZERO(&m_set);}
+    void Add(BaseSocket&socket){if(socket.m_sockfd>m_max)m_max=socket.m_sockfd;FD_SET(socket.m_sockfd,&m_set);}
     int Check(BaseSocket&socket){return FD_ISSET(socket.m_sockfd,&m_set);}
-    int Select(){return select(0,&m_set,NULL,NULL,NULL);}
+    int Select(){return select(m_max+1,&m_set,NULL,NULL,NULL);}
 };
 
 class UDPSocket:public BaseSocket

@@ -10,7 +10,7 @@ $(OBJDIR)/%.o: JPlot/%.cpp
 
 all: $(OBJS)
 	$(CPP) -g -o jplot $(OBJS) $(LIBS)
-	ar rs JPLib/libjplot.a obj/API.o obj/netlayer.o
+	ar rs JPLib/libjplot.a obj/API.o obj/netlayer.o obj/IPC.o
 
 clean:
 	rm -rf obj
