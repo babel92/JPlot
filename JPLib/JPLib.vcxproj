@@ -75,9 +75,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\JPlot\API.cpp" />
+    <ClCompile Include="..\JPlot\IPC.cpp" />
     <ClCompile Include="..\JPlot\netlayer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\JPlot\IPC.h" />
     <ClInclude Include="..\JPlot\JPlot.h" />
     <ClInclude Include="..\JPlot\netlayer.h" />
   </ItemGroup>

@@ -24,12 +24,18 @@
     <ClCompile Include="..\JPlot\netlayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\JPlot\IPC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\JPlot\JPlot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\JPlot\netlayer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\JPlot\IPC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

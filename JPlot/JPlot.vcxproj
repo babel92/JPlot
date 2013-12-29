@@ -105,6 +105,7 @@
   <ItemGroup>
     <ClCompile Include="API.cpp" />
     <ClCompile Include="Cartesian.cpp" />
+    <ClCompile Include="IPC.cpp" />
     <ClCompile Include="JPlot.cpp" />
     <ClCompile Include="netlayer.cpp" />
     <ClCompile Include="Plotter.cpp" />

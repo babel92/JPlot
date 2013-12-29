@@ -63,7 +63,6 @@ int JPlot_Init()
 		JPlot_Run();
 		int ret = JPlot_WaitStartupWithTimeout(Evnt, 0);
 		JPlot_DestroyEvent(Evnt);
-		sleep(1);
 		if(!Conn->Connect())
 		{
 			fprintf(stderr, "Failed to connect: %d\n", errno);
