@@ -1,7 +1,7 @@
 #include "IPC.h"
-#include <semaphore.h>
 
 #ifdef LINUX
+#include <semaphore.h>
 	struct evntobj
 	{
 		IPCObj handle;

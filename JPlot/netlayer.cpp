@@ -63,8 +63,10 @@ BaseSocket::BaseSocket(bool type,const string host,const string port)
                           p->ai_protocol);
         //int m=sizeof m_bufsize;
         //getsockopt(m_sockfd,SOL_SOCKET,SO_RCVBUF,(char *)&m_bufsize, &m);
-	int set = 1;
-	setsockopt(m_sockfd, SOL_SOCKET, MSG_NOSIGNAL, (void *)&set, sizeof(int));
+#ifdef LINUX
+		int set = 1;
+		setsockopt(m_sockfd, SOL_SOCKET, MSG_NOSIGNAL, (void *)&set, sizeof(int));
+#endif
         break;
     }
 }
