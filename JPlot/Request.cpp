@@ -44,6 +44,7 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 
 	FieldRetriver Header(Request);
 	std::string&& Cmd = Header.String(4);
+	Header.Int();
 	//cout<<Request<<endl;
 	if (Cmd == "NEWF")
 	{

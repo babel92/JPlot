@@ -45,13 +45,13 @@ void IPCListener()
 		cerr << "Port " << JPLOT_PORT << " occupied. Exit.\n";
 		exit(1);
 	}
-	if(!Server.Listen())
+	if (!Server.Listen())
 	{
 		cerr << "Can't listen on port"
 #ifdef LINUX
-		": "<< errno
+			": "<< errno
 #endif
-		<<endl;
+			<< endl;
 		exit(1);
 	}
 	IPCObj IPCEvent = IPCHelper::FindIPCEvent("JPlotEVENT");
@@ -86,7 +86,7 @@ void IPCListener()
 
 void RequestListener()
 {
-	Multiplexer Mul;
+	Multiplexer Mul(0, 50);
 	std::unique_lock<std::mutex> LckNewClient(MuClient);
 
 	while (!Exit)
@@ -94,7 +94,7 @@ void RequestListener()
 		if (ClientList.size() == 0)
 		{
 			EvtNewClient.wait(LckNewClient);
-			if(Exit)
+			if (Exit)
 				return;
 		}
 
@@ -103,7 +103,7 @@ void RequestListener()
 		for (auto Client : ClientList)
 			Mul.Add(*Client->Socket);
 		Mul.Select();
-		
+
 		for (auto it = ClientList.begin(); it < ClientList.end();)
 		{
 			TCPSocket*Client = (*it)->Socket;
@@ -125,6 +125,11 @@ void RequestListener()
 				}
 				else
 				{
+					int TotSize = *(int*)(Buffer + 4);
+					while (RecvSize < TotSize)
+					{
+						RecvSize += Client->Recv(Buffer + RecvSize, 10000);
+					}
 					RequestHandler(*it, Buffer, RecvSize);
 				}
 			}
@@ -205,7 +210,7 @@ int main(int argc, char* argv[])
 	Group.align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
 	Fl_Hold_Browser listview(10, 10, 380, 280);
 	PtrBrow = &listview;
-	listview.add("ID\tType\tTitle",(void*)-1);
+	listview.add("ID\tType\tTitle", (void*)-1);
 	listview.align(FL_ALIGN_TOP | FL_ALIGN_INSIDE);
 	Group.add_resizable(listview);
 	Group.end();

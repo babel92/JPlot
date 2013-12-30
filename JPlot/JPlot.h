@@ -6,16 +6,23 @@
 
 #define JPLOT_PORT "64129"
 
-typedef void* JPlot;
+
 
 class TCPSocket;
-
+typedef struct JPlot_ctx
+{
+	TCPSocket* Socket;
+	int ID;
+	int GraphType;
+	JPlot_ctx(TCPSocket*S) :Socket(S){}
+}*JPlot;
+/*
 typedef struct JGraph_ctx
 {
 	int ID;
 	int GraphType;
 }*JGraph;
-
+*/
 struct Client
 {
 	TCPSocket* Socket;
@@ -66,13 +73,13 @@ enum JP2DARG
 
 extern const char* JPGraphName[];
 
-int JPlot_Init();
-std::string JPlot_Command(int Command, ...);
-JGraph JPlot_NewPlot(std::string GraphName="Who Cares", std::string XLabel="X", std::string YLabel="Y", int GraphType = JP2D);
-int JPlot_Draw(JGraph J, float* Buf, int Size);
-int JPlot_Draw2(JGraph J, float(*Buf)[2], int Size);
-int JPlot_Draw2(JGraph J, float*X, float*Y, int Size);
-int JPlot_SetRange(JGraph J, int Axis, float Min, float Max);
-int JPlot_Close(JGraph J);
+JPlot JPlot_Init();
+std::string JPlot_Command(JPlot Instance, int Command, ...);
+int JPlot_NewPlot(JPlot Instance, std::string GraphName = "Who Cares", std::string XLabel = "X", std::string YLabel = "Y", int GraphType = JP2D);
+int JPlot_Draw(JPlot Instance, float* Buf, int Size);
+int JPlot_Draw2(JPlot Instance, float(*Buf)[2], int Size);
+int JPlot_Draw2(JPlot Instance, float*X, float*Y, int Size);
+int JPlot_SetRange(JPlot Instance, int Axis, float Min, float Max);
+int JPlot_Close(JPlot Instance);
 
 #endif

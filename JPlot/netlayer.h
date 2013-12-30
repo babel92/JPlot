@@ -112,7 +112,7 @@ public:
 #elif LINUX
 			m_max+1
 #endif
-			,&m_set,NULL,NULL,NULL);
+			,&m_set,NULL,NULL,&m_time);
 	}
 };
 

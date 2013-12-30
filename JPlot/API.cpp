@@ -7,7 +7,6 @@
 
 #define INTERNAL
 
-JPlot Instance;
 const char* JPGraphName[] =
 {
 	"2D"
@@ -50,18 +49,15 @@ int JPlot_WaitStartupWithTimeout(IPCObj Event, int Milli)INTERNAL
 	return IPCHelper::WaitOnIPCEvent(Event, Milli);
 }
 
-int JPlot_Init()
+JPlot JPlot_Init()
 {
-	if (Instance)
-		return 1;
-
 	char buf[512];
 	TCPSocket* Conn = new TCPSocket("localhost", JPLOT_PORT);
 	if (!Conn->Connect())
 	{
 		IPCObj Evnt = JPlot_SetupEvent();
 		JPlot_Run();
-		int ret = JPlot_WaitStartupWithTimeout(Evnt, 0);
+		int ret = JPlot_WaitStartupWithTimeout(Evnt, 50);
 		if(ret!=1)
 		{
 			fprintf(stderr,"Wait failed: %d\n",errno);
@@ -74,14 +70,11 @@ int JPlot_Init()
 		}
 		if(-1==Conn->Recv(buf, 512))
 			goto fail;
-		Instance = ret ? Conn : NULL;
-		return ret;
+		return new JPlot_ctx(Conn);
 	}
 	if(-1==Conn->Recv(buf, 512))
 		goto fail;
-	
-	Instance = Conn;
-	return 1;
+	return new JPlot_ctx(Conn);
 fail:
 	fprintf(stderr,"Socket failure: %d\n",errno);
 	exit(1);
@@ -93,8 +86,11 @@ fail:
 #define ARGDBL va_arg(args,double)
 #define ARGFLT ((float)ARGDBL) // float is promoted to double
 
-std::string JPlot_Command(int Command, ...)
+#define HEADER(HEAD) (MsgBuilder.String(HEAD).Int(0))
+
+std::string JPlot_Command(JPlot Plot, int Command, ...)
 {
+	TCPSocket* Instance = Plot->Socket;
 	if (!Instance)
 		throw;
 
@@ -108,7 +104,7 @@ std::string JPlot_Command(int Command, ...)
 	switch (Command)
 	{
 	case JPNEWF:
-		MsgBuilder.String("NEWF");
+		HEADER("NEWF");
 		MsgBuilder.Int(ARGINT);
 		MsgBuilder.String(ARGPTR(char*), 16);
 		MsgBuilder.String(ARGPTR(char*), 16);
@@ -117,12 +113,11 @@ std::string JPlot_Command(int Command, ...)
 		break; 
 	case JPDRAW:
 		{
-			JGraph ctx = ARGPTR(JGraph); // Graph context
 			int Arg = ARGINT; // Arg
 			int Type = ARGINT; // Data type
 			int Size = ARGINT; // Size
-			MsgBuilder.String("DRAW");
-			MsgBuilder.Int(ctx->ID); 
+			HEADER("DRAW");
+			MsgBuilder.Int(Plot->ID); 
 			MsgBuilder.Int(Arg); 
 			MsgBuilder.Int(Type); 
 			MsgBuilder.Int(Size);
@@ -139,7 +134,7 @@ std::string JPlot_Command(int Command, ...)
 				CalculatedSize *= sizeof(int);
 				break;
 			}
-			switch (ctx->GraphType)
+			switch (Plot->GraphType)
 			{
 			case JP2D:
 				switch (Arg)
@@ -163,12 +158,12 @@ std::string JPlot_Command(int Command, ...)
 			break;
 		}
 	case JPFREE:
-		MsgBuilder.String("FREE").Int(ARGINT);
+		HEADER("FREE").Int(ARGINT);
 		break;
 	case JPSETF:
 		{
 			int Setting = ARGINT;
-			MsgBuilder.String("SETF");
+			HEADER("SETF");
 			MsgBuilder.Int(Setting);
 			MsgBuilder.Int(ARGINT); // ID
 			switch (Setting)
@@ -191,60 +186,62 @@ std::string JPlot_Command(int Command, ...)
 	}
 	va_end(args);
 	int SendSize = MsgBuilder.Pos();
+	*(int*)(SendBuffer + 4) = SendSize;
 	int ActualSendSize = Socket->Send(SendBuffer, SendSize);
 	size_t RetSize = Socket->Recv(SendBuffer, 8192);
 	return{ SendBuffer, RetSize >= 16 || RetSize < 0 ? 0 : RetSize };
 }
 
-JGraph JPlot_NewPlot(string GraphName, string XLabel, string YLabel, int GraphType)
+int JPlot_NewPlot(JPlot Instance, string GraphName, string XLabel, string YLabel, int GraphType)
 {
-	int ID = std::stoi(JPlot_Command(JPNEWF, GraphType, GraphName.c_str(), XLabel.c_str(), YLabel.c_str(), 0));
-	JGraph ret = new JGraph_ctx;
-	ret->GraphType = GraphType;
-	ret->ID = ID;
-	return ret;
-}
-
-int JPlot_DrawBase(JGraph J, int Arg, int Type, void* Buf, int Size)INTERNAL
-{
-	if (!J || Size <= 0)
-		return 0;
-	JPlot_Command(JPDRAW, J, Arg, Type, Size, Buf);
+	int ID = std::stoi(JPlot_Command(Instance, JPNEWF, GraphType, GraphName.c_str(), XLabel.c_str(), YLabel.c_str(), 0));
+	Instance->GraphType = GraphType;
+	Instance->ID = ID;
 	return 1;
 }
 
-int JPlot_Draw(JGraph J, float* Buf, int Size)
+int JPlot_DrawBase(JPlot J, int Arg, int Type, void* Buf, int Size)INTERNAL
+{
+	if (!J || Size <= 0)
+		return 0;
+	JPlot_Command(J, JPDRAW, Arg, Type, Size, Buf);
+	return 1;
+}
+
+int JPlot_Draw(JPlot J, float* Buf, int Size)
 {
 	return JPlot_DrawBase(J, JP1COORD, JPFLOAT, Buf, Size);
 }
 
-int JPlot_Draw2(JGraph J, float (*Buf)[2], int Size)
+int JPlot_Draw2(JPlot J, float(*Buf)[2], int Size)
 {
 	return JPlot_DrawBase(J, JP2COORD, JPFLOAT, Buf, Size);
 }
 
-int JPlot_Draw2(JGraph J, float*X, float*Y, int Size)
+int JPlot_Draw2(JPlot J, float*X, float*Y, int Size)
 {
 	float* PtrArr[2] = { X, Y };
 	return JPlot_DrawBase(J, JP2COORDSEP, JPFLOAT, PtrArr, Size);
 }
 
-int JPlot_Close(JGraph J)
+int JPlot_Close(JPlot J)
 {
 	if (!J)
 		return 0;
-	if (JPlot_Command(JPFREE, J->ID).find("OK") >= 0)
+	if (JPlot_Command(J, JPFREE, J->ID).find("OK") >= 0)
 	{
+		J->Socket->Shutdown();
+		delete J->Socket;
 		delete J;
 		return 1;
 	}
 	return 0;
 }
 
-int JPlot_SetRange(JGraph J, int Axis, float Min, float Max)
+int JPlot_SetRange(JPlot J, int Axis, float Min, float Max)
 {
 	if (!J)
 		return 0;
-	JPlot_Command(JPSETF, Axis, J->ID, Min, Max);
+	JPlot_Command(J, JPSETF, Axis, J->ID, Min, Max);
 	return 1;
 }
