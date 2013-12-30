@@ -75,7 +75,7 @@ void IPCListener()
 		}
 		ClientList.push_back(Incoming);
 		Incoming->Socket->Send("JPLOTIPC");
-
+		if (ClientList.size() == 1)
 		{
 			std::lock_guard<std::mutex> lock(MuClient);
 			EvtNewClient.notify_one();
@@ -128,7 +128,7 @@ void RequestListener()
 					int TotSize = *(int*)(Buffer + 4);
 					while (RecvSize < TotSize)
 					{
-						RecvSize += Client->Recv(Buffer + RecvSize, 10000);
+						RecvSize += Client->Recv(Buffer + RecvSize, 10240 - RecvSize);
 					}
 					RequestHandler(*it, Buffer, RecvSize);
 				}

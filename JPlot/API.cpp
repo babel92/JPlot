@@ -158,14 +158,14 @@ std::string JPlot_Command(JPlot Plot, int Command, ...)
 			break;
 		}
 	case JPFREE:
-		HEADER("FREE").Int(ARGINT);
+		HEADER("FREE").Int(Plot->ID);
 		break;
 	case JPSETF:
 		{
 			int Setting = ARGINT;
 			HEADER("SETF");
 			MsgBuilder.Int(Setting);
-			MsgBuilder.Int(ARGINT); // ID
+			MsgBuilder.Int(Plot->ID); // ID
 			switch (Setting)
 			{
 			case JPXRANGE:
@@ -188,6 +188,8 @@ std::string JPlot_Command(JPlot Plot, int Command, ...)
 	int SendSize = MsgBuilder.Pos();
 	*(int*)(SendBuffer + 4) = SendSize;
 	int ActualSendSize = Socket->Send(SendBuffer, SendSize);
+	if (ActualSendSize != -1 && ActualSendSize < SendSize)
+		throw;
 	size_t RetSize = Socket->Recv(SendBuffer, 8192);
 	return{ SendBuffer, RetSize >= 16 || RetSize < 0 ? 0 : RetSize };
 }
@@ -228,7 +230,7 @@ int JPlot_Close(JPlot J)
 {
 	if (!J)
 		return 0;
-	if (JPlot_Command(J, JPFREE, J->ID).find("OK") >= 0)
+	if (JPlot_Command(J, JPFREE).find("OK") >= 0)
 	{
 		J->Socket->Shutdown();
 		delete J->Socket;
@@ -242,6 +244,6 @@ int JPlot_SetRange(JPlot J, int Axis, float Min, float Max)
 {
 	if (!J)
 		return 0;
-	JPlot_Command(J, JPSETF, Axis, J->ID, Min, Max);
+	JPlot_Command(J, JPSETF, Axis, Min, Max);
 	return 1;
 }
