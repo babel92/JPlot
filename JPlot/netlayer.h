@@ -104,7 +104,16 @@ public:
     void Zero(){m_max=-1;FD_ZERO(&m_set);}
     void Add(BaseSocket&socket){if(socket.m_sockfd>m_max)m_max=socket.m_sockfd;FD_SET(socket.m_sockfd,&m_set);}
     int Check(BaseSocket&socket){return FD_ISSET(socket.m_sockfd,&m_set);}
-    int Select(){return select(m_max+1,&m_set,NULL,NULL,NULL);}
+    int Select()
+	{
+		return select(
+#ifdef WIN32
+			0
+#elif LINUX
+			m_max+1
+#endif
+			,&m_set,NULL,NULL,NULL);
+	}
 };
 
 class UDPSocket:public BaseSocket

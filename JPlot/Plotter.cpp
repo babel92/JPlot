@@ -111,8 +111,10 @@ void Plotter::Plot(Real*buf,int size)
     Ca_Canvas::current(m_canvas);
     m_y->current();
     m_canvas->clear();
-    for(int i=0;i<size;++i)
-        lp=new Ca_LinePoint(lp,i,buf[i],0,FL_BLUE);
+	for (int i = 0; i < size; ++i){
+
+		lp = new Ca_LinePoint(lp, i, buf[i], 0, FL_BLUE);
+	}
     redraw();
     //delete[] buf;
 }

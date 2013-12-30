@@ -31,6 +31,13 @@ BaseSocket::BaseSocket(bool type,const string host,const string port)
     hints.ai_socktype = type?SOCK_STREAM:SOCK_DGRAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
+	if (host == "")
+	{
+		getaddrinfo(NULL, port.c_str(), &hints, &m_addr);
+		m_sockfd = socket(m_addr->ai_family, m_addr->ai_socktype, m_addr->ai_protocol);
+		m_target = *m_addr;
+		return;
+	}
 
     int ret;
     if ((ret = getaddrinfo(host.length()>0?host.c_str():NULL,port.c_str(),&hints,&m_addr)) != 0)

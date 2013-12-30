@@ -190,7 +190,8 @@ std::string JPlot_Command(int Command, ...)
 		break;
 	}
 	va_end(args);
-	Socket->Send(SendBuffer, MsgBuilder.Pos());
+	int SendSize = MsgBuilder.Pos();
+	int ActualSendSize = Socket->Send(SendBuffer, SendSize);
 	size_t RetSize = Socket->Recv(SendBuffer, 8192);
 	return{ SendBuffer, RetSize >= 16 || RetSize < 0 ? 0 : RetSize };
 }

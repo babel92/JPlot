@@ -39,7 +39,7 @@ bool Exit = 0;
 
 void IPCListener()
 {
-	TCPSocket Server("localhost", JPLOT_PORT);
+	TCPSocket Server("127.0.0.1", JPLOT_PORT);
 	if (!Server.Bind())
 	{
 		cerr << "Port " << JPLOT_PORT << " occupied. Exit.\n";
