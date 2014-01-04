@@ -158,9 +158,6 @@ int RequestHandler(Client*Peer, const char*Request, int ReqSize)
 			case JP1COORD:
 				{
 					float* buf = (float*)Header.Ptr();
-					for (int i = 0; i < Size;++i)
-						if (buf[i] > 1)
-							throw;
 					Plt->Plot((float*)Header.Ptr(), Size);
 					break;
 				}

@@ -90,14 +90,15 @@ fail:
 
 std::string JPlot_Command(JPlot Plot, int Command, ...)
 {
+	const size_t BUF_SIZE = 10240;
 	TCPSocket* Instance = Plot->Socket;
 	if (!Instance)
 		throw;
 
 	va_list args;
 	
-	char SendBuffer[8192];
-	memset(SendBuffer, 0, 8192);
+	char SendBuffer[BUF_SIZE];
+	memset(SendBuffer, 0, BUF_SIZE);
 	TCPSocket* Socket = (TCPSocket*)Instance;
 	FieldFiller MsgBuilder(SendBuffer);
 	va_start(args, Command);
@@ -190,7 +191,7 @@ std::string JPlot_Command(JPlot Plot, int Command, ...)
 	int ActualSendSize = Socket->Send(SendBuffer, SendSize);
 	if (ActualSendSize != -1 && ActualSendSize < SendSize)
 		throw;
-	size_t RetSize = Socket->Recv(SendBuffer, 8192);
+	size_t RetSize = Socket->Recv(SendBuffer, BUF_SIZE);
 	return{ SendBuffer, RetSize >= 16 || RetSize < 0 ? 0 : RetSize };
 }
 
